@@ -10,7 +10,6 @@ import pyextrasafe
 needs_sphinx = "6.0"
 
 extensions = [
-    "myst_parser",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.autosummary",
