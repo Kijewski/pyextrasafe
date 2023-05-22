@@ -5,3 +5,4 @@ requires = [
     "wheel >= 0.37.1",
     "setuptools_rust == 1.*, >= 1.1.2",
 ]
+build-backend = "setuptools.build_meta"

@@ -1,0 +1,58 @@
+name: Cibuildwheels
+
+on:
+  workflow_dispatch:
+
+jobs:
+  linux:
+    name: Wheel
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        build:
+          - cp38
+          - cp39
+          - cp310
+          - cp311
+          - pp38
+          - pp39
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Update pip
+        run: python -m pip install -U pip wheel setuptools
+
+      - name: Install requirements
+        run: python -m pip install -Ur requirements-dev.txt
+
+      - name: Build wheels
+        run: python -m cibuildwheel --output-dir wheelhouse
+        env:
+          CIBW_BUILD_FRONTEND: build
+          CIBW_BUILD: ${{ matrix.build }}-*
+          CIBW_SKIP: "*musllinux*"
+          CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux2014_x86_64
+          CIBW_ARCHS: x86_64
+          CIBW_ENVIRONMENT: 'PATH="$PATH:$HOME/.cargo/bin"'
+          CIBW_BEFORE_BUILD_LINUX: |
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --verbose --profile minimal --default-toolchain stable || true
+            apt-get -y update || true
+            yum -y update || true
+            apt-get -y install libseccomp-dev || true
+            yum -y install libseccomp-devel || true
+
+      - name: Store artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: Wheelhouse
+          path: ./wheelhouse/*.whl
