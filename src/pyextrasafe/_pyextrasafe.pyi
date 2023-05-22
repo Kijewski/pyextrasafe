@@ -19,7 +19,7 @@ class SafetyContext:
         "Load the SafetyContext’s rules into a seccomp filter and apply the filter to all threads in this process."
     def apply_to_current_thread(self) -> None:
         "Load the SafetyContext’s rules into a seccomp filter and apply the filter to the current thread."
-    def enable(self, policy: RuleSet) -> None:
+    def enable(self, policy: RuleSet) -> SafetyContext:
         "Enable the simple and conditional rules provided by the RuleSet."
 
 class RuleSet:

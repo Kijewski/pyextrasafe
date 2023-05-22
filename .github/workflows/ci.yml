@@ -154,6 +154,9 @@ jobs:
       - name: Doc
         run: python3 -m sphinx -M html ./docs/ ./dist/
 
+      - name: Test
+        run: python3 hello-world.py
+
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
         with:

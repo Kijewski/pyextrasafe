@@ -12,7 +12,7 @@ PyExtraSafe
 .. |OS: Linux| image:: https://img.shields.io/badge/os-linux-informational?logo=linux&logoColor=efefef&style=flat-square
    :target: https://kernel.org/
 .. |License| image:: https://img.shields.io/badge/license-Apache--2.0-informational?logo=apache&logoColor=efefef&style=flat-square
-   :target: /LICENSE.md
+   :target: https://github.com/Kijewski/pyextrasafe/blob/main/LICENSE.md
 
 |GitHub Workflow Status|
 |Documentation Status|
