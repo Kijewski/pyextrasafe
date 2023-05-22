@@ -1,0 +1,3 @@
+include build.rs Cargo.toml pyproject.toml Makefile requirements*.txt rustfmt.toml
+recursive-include docs *
+recursive-include src *

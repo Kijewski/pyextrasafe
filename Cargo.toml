@@ -1,0 +1,33 @@
+[package]
+name = "pyextrasafe"
+description = "Make your code extrasafe by preventing it from calling unneeded syscalls"
+edition = "2021"
+license = "Apache-2.0"
+authors = ["René Kijewski <pypi.org@k6i.de>"]
+homepage = "https://github.com/Kijewski/pyextrasafe"
+
+# KEEP SYNCHRONOUS TO SETUP.CFG (version)
+# KEEP SYNCHRONOUS TO REQUIREMENTS-READTHEDOCS.TXT (pyextrasafe)
+# KEEP SYNCHRONOUS TO LINKS IN README.MD (raw.githubusercontent.com)
+# Rust uses semver (https://semver.org/).
+# Python uses PEP 440 (https://www.python.org/dev/peps/pep-0440/).
+# Normal releases are exactly the same.
+# Pre-releases are X.Y.Z-aN in semver, and X.Y.ZaN in PEP 440.
+# Post-releases are X.Y.Z+N in semver, and X.Y.Z.postN in PEP 440.
+version = "0.0.0-a0"
+
+[lib]
+name = "_pyextrasafe"
+crate-type = ["cdylib"]
+
+[dependencies]
+extrasafe = "0.1.2"
+pyo3 = { version = "0.18.3", default-features = false, features = ["abi3-py37", "extension-module", "macros", "multiple-pymethods"] }
+
+[build-dependencies]
+pyo3-build-config = "0.18.3"
+
+[profile.release]
+opt-level = "s"
+lto = "fat"
+codegen-units = 1
