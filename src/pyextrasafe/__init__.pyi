@@ -7,6 +7,5 @@ from pyextrasafe._pyextrasafe import *
 
 __all__: list[str]
 __author__: str
-__doc__: str
 __license__: str
 __version__: str

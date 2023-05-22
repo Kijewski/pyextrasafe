@@ -1,3 +1,0 @@
-ol.simple > li:not(:first-child) > p, ul.simple > li:not(:first-child) > p {
-    margin: 1.5em 0 1.5em 0;
-}

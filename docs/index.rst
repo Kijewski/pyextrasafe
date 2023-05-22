@@ -7,7 +7,7 @@ PyExtraSafe
    :target: https://pyextrasafe.readthedocs.io/
 .. |PyPI| image:: https://img.shields.io/pypi/v/pyextrasafe?logo=pypi&logoColor=efefef&style=flat-square
    :target: https://pypi.org/project/pyextrasafe/
-.. |Python >= 3.7| image:: https://img.shields.io/badge/python-%E2%89%A5%203.7-informational?logo=python&logoColor=efefef&style=flat-square
+.. |Python >= 3.8| image:: https://img.shields.io/badge/python-%E2%89%A5%203.8-informational?logo=python&logoColor=efefef&style=flat-square
    :target: https://www.python.org/
 .. |OS: Linux| image:: https://img.shields.io/badge/os-linux-informational?logo=linux&logoColor=efefef&style=flat-square
    :target: https://kernel.org/
@@ -17,7 +17,7 @@ PyExtraSafe
 |GitHub Workflow Status|
 |Documentation Status|
 |PyPI|
-|Python >= 3.7|
+|Python >= 3.8|
 |OS: Linux|
 |License|
 

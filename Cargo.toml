@@ -22,7 +22,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 extrasafe = "0.1.2"
-pyo3 = { version = "0.18.3", default-features = false, features = ["abi3-py37", "extension-module", "macros", "multiple-pymethods"] }
+pyo3 = { version = "0.18.3", default-features = false, features = ["extension-module", "macros", "multiple-pymethods"] }
 
 [build-dependencies]
 pyo3-build-config = "0.18.3"

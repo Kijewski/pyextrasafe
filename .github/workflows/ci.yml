@@ -1,0 +1,145 @@
+name: CI
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+  schedule:
+    - cron: "58 7 * * 4"
+
+jobs:
+  rust-fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Rust
+        uses: ./.github/actions/setup-rust
+        with:
+          key: fmt
+          toolchain: nightly
+          components: rustfmt
+
+      - run: cargo fmt --all -- --check
+
+  rust-clippy:
+    strategy:
+      matrix:
+        toolchain:
+          - stable
+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Rust
+        uses: ./.github/actions/setup-rust
+        with:
+          key: clippy
+          toolchain: ${{ matrix.toolchain }}
+          components: clippy
+
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+
+  rust-check:
+    strategy:
+      matrix:
+        toolchain:
+          - stable
+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Rust
+        uses: ./.github/actions/setup-rust
+        with:
+          key: check
+          toolchain: ${{ matrix.toolchain }}
+
+      - run: cargo check --workspace --all-targets
+
+  rust-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Rust
+        uses: ./.github/actions/setup-rust
+        with:
+          key: audit
+          toolchain: stable
+
+      - name: Audit
+        uses: actions-rs/audit-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  python-black:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11"]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install -U pip
+          python3 -m pip install -Ur requirements-dev.txt
+
+      - name: Run black
+        run: python3 -m black --check .
+
+  python-make:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.8", "3.11"]
+        toolchain:
+          - stable
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Setup Rust
+        uses: ./.github/actions/setup-rust
+        with:
+          key: make
+          toolchain: ${{ matrix.toolchain }}
+
+      - name: Apt-get install
+        run: sudo apt-get install -y libseccomp-dev
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install -U pip
+          python3 -m pip install -Ur requirements-dev.txt
+
+      - name: Build
+        run: python3 -m build --no-isolation
+
+      - name: Install
+        run: python -m pip install ./dist/pyextrasafe-*-linux_x86_64.whl
+
+      - name: Lint
+        run: python3 -m mypy -m pyextrasafe
+
+      - name: Doc
+        run: python3 -m sphinx -M html ./docs/ ./dist/

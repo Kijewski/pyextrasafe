@@ -1,0 +1,71 @@
+name: Setup Rust Environment
+
+inputs:
+  key:
+    description: Cache key
+    required: true
+  toolchain:
+    description: Pass-through to toolchain on actions-rs
+    default: stable
+    required: false
+  components:
+    description: Pass-through to components on actions-rs
+    default: ""
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Remove rustfmt
+      run: rm -f ~/.cargo/bin/rustfmt ~/.cargo/bin/cargo-fmt
+      shell: bash
+
+    - name: Rustup Cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.rustup/downloads
+          ~/.rustup/toolchains
+          ~/.rustup/update-hashes
+        key: rustup-${{ inputs.key }}-${{ runner.os }}-${{ inputs.toolchain }}
+        restore-keys: |
+          rustup-${{ inputs.key }}-${{ runner.os }}-
+          rustup-${{ inputs.key }}-
+          rustup-
+
+    - name: Update Rustup
+      shell: bash
+      run: rustup self update
+
+    - name: Install Toolchain
+      shell: bash
+      if: inputs.components == ''
+      run: rustup toolchain install ${{ inputs.toolchain }} --profile minimal --no-self-update
+
+    - name: Install Toolchain + Components
+      shell: bash
+      if: inputs.components != ''
+      run: rustup toolchain install ${{ inputs.toolchain }} --profile minimal --no-self-update --component ${{ inputs.components }}
+
+    - name: Set default
+      shell: bash
+      run: rustup default ${{ inputs.toolchain }}
+
+    - name: Update
+      shell: bash
+      run: rustup update ${{ inputs.toolchain }} --no-self-update
+
+    - name: Build Cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          ~/.cargo/bin/
+          target/
+        key: |
+          ${{ inputs.key }}-${{ runner.os }}-${{ inputs.toolchain }}-${{ steps.toolchain-install.outputs.cachekey }}-${{ hashFiles('**/Cargo.toml', '**/Cargo.lock') }}
+        restore-keys: |
+          ${{ inputs.key }}-${{ runner.os }}-${{ inputs.toolchain }}-${{ steps.toolchain-install.outputs.cachekey }}-
+          ${{ inputs.key }}-${{ runner.os }}-${{ inputs.toolchain }}-
