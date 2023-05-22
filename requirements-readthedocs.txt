@@ -4,5 +4,5 @@ pyextrasafe == 0.0.0a0
 # keep synchronous to requirements-dev.txt
 furo == 2023.5.20
 myst-parser == 1.*
-sphinx == 6.*
+sphinx == 7.*
 sphinx_autodoc_typehints == 1.*
