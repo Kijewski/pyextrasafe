@@ -109,6 +109,11 @@ jobs:
         toolchain:
           - stable
 
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
     steps:
       - uses: actions/checkout@v3
 
@@ -132,6 +137,11 @@ jobs:
           python3 -m pip install -U pip
           python3 -m pip install -Ur requirements-dev.txt
 
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: 'python'
+
       - name: Build
         run: python3 -m build --no-isolation
 
@@ -143,3 +153,8 @@ jobs:
 
       - name: Doc
         run: python3 -m sphinx -M html ./docs/ ./dist/
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+        with:
+          category: "/language:python"
