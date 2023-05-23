@@ -1,9 +1,9 @@
-all: build docs
+all: build docs test
 
 
 .DELETE_ON_ERROR:
 .ONESHELL:
-.PHONY: all build clean dists docs install sdist
+.PHONY: all build clean dists docs install sdist test
 
 
 export ENV_DIR ?= env
@@ -56,6 +56,12 @@ docs: install | ${ENV_DIR}/
 
 	. "./$${ENV_DIR}/bin/activate"
 	python3 -m sphinx -M html ./docs/ ./dist/
+
+
+test: install | ${ENV_DIR}/
+	set -eu
+	. "./$${ENV_DIR}/bin/activate"
+	python3 hello-world.py
 
 
 dists:
