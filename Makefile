@@ -55,7 +55,7 @@ docs: install | ${ENV_DIR}/
 	rm -r -- "./dist/html/" || true
 
 	. "./$${ENV_DIR}/bin/activate"
-	python3 -m sphinx -M html ./docs/ ./dist/
+	python3 -m sphinx -W -M html ./docs/ ./dist/
 
 
 test: install | ${ENV_DIR}/

@@ -18,10 +18,10 @@ if __name__ == "__main__":
     except Exception as ex:
         raise Exception("Could not run Thread (should have been able!)") from ex
 
-    ctx = pyextrasafe.SafetyContext()
-    ctx.enable(pyextrasafe.BasicCapabilities())
-    ctx.enable(pyextrasafe.SystemIO().allow_stdout().allow_stderr())
-    ctx.apply_to_all_threads()
+    pyextrasafe.SafetyContext().enable(
+        pyextrasafe.BasicCapabilities(),
+        pyextrasafe.SystemIO().allow_stdout().allow_stderr(),
+    ).apply_to_all_threads()
 
     try:
         thread = Thread(target=print, args=["Hello, world!"])

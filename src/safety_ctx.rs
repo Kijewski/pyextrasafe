@@ -1,8 +1,5 @@
-use std::fmt::Write;
-
 use extrasafe::SafetyContext;
-use pyo3::types::PyList;
-use pyo3::{pyclass, pymethods, Py, PyAny, PyRef, PyRefMut, PyResult, Python};
+use pyo3::{pyclass, pymethods, Py, PyRef, PyRefMut, PyResult, Python};
 
 use crate::rule_sets::{EnablePolicy, PyRuleSet};
 use crate::ExtraSafeError;
@@ -19,13 +16,13 @@ use crate::ExtraSafeError;
 #[pyclass]
 #[pyo3(name = "SafetyContext", module = "pyextrasafe")]
 #[derive(Debug)]
-pub(crate) struct PySafetyContext(Py<PyList>);
+pub(crate) struct PySafetyContext(Vec<Py<PyRuleSet>>);
 
 impl PySafetyContext {
     fn to_context(&self, py: Python<'_>) -> PyResult<SafetyContext> {
         let mut ctx = SafetyContext::new();
-        for policy in self.0.as_ref(py) {
-            let policy = policy.downcast::<PyRuleSet>()?;
+        for policy in &self.0 {
+            let policy = &*policy.borrow(py);
             ctx = policy.enable_to(ctx).map_err(|err| {
                 ExtraSafeError::new_err(format!("policy {policy:?} could not be applied: {err}"))
             })?;
@@ -37,16 +34,16 @@ impl PySafetyContext {
 #[pymethods]
 impl PySafetyContext {
     #[new]
-    pub(crate) fn new(py: Python<'_>) -> Self {
-        Self(PyList::empty(py).into())
+    pub(crate) fn new() -> Self {
+        Self(Vec::new())
     }
 
     /// Enable the simple and conditional rules provided by the :class:`~pyextrasafe.RuleSet`.
     ///
     /// Parameters
     /// ----------
-    /// policy: RuleSet
-    ///     :class:`~pyextrasafe.RuleSet` to enable.
+    /// policies: list[RuleSet]
+    ///     :class:`~pyextrasafe.RuleSet`\s to enable.
     ///
     /// Returns
     /// -------
@@ -57,12 +54,12 @@ impl PySafetyContext {
     /// ------
     /// TypeError
     ///     Argument was not an instance of :class:`~pyextrasafe.RuleSet`.
+    #[pyo3(signature = (*policies))]
     fn enable<'p>(
-        ctx: PyRefMut<'p, Self>,
-        py: Python<'_>,
-        policy: Py<PyRuleSet>,
+        mut ctx: PyRefMut<'p, Self>,
+        mut policies: Vec<Py<PyRuleSet>>,
     ) -> PyResult<PyRefMut<'p, Self>> {
-        ctx.0.as_ref(py).append(policy)?;
+        ctx.0.append(&mut policies);
         Ok(ctx)
     }
 
@@ -94,25 +91,28 @@ impl PySafetyContext {
 
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
         let mut s = String::new();
-        let list_repr = self.0.as_ref(py).repr()?.to_str()?;
-        write!(s, "<SafetyContext {list_repr}>")
-            .map_err(|err| ExtraSafeError::new_err(format!("could not debug??: {err}")))?;
-        Ok(s)
+        for policy in &self.0 {
+            if !s.is_empty() {
+                s.push_str(", ");
+            }
+            s.push_str(policy.as_ref(py).repr()?.to_str()?);
+        }
+        Ok(format!("<SafetyContext [{s}]>"))
     }
 
-    fn __iter__(&self) -> Iter {
+    fn __iter__(ctx: PyRef<'_, Self>) -> Iter {
         Iter {
-            lst: self.0.clone(),
+            ctx: ctx.into(),
             idx: 0,
         }
     }
 
-    fn __len__(&self, py: Python<'_>) -> usize {
-        self.0.as_ref(py).len()
+    fn __len__(&self) -> usize {
+        self.0.len()
     }
 
-    fn __bool__(&self, py: Python<'_>) -> bool {
-        !self.0.as_ref(py).is_empty()
+    fn __bool__(&self) -> bool {
+        !self.0.is_empty()
     }
 }
 
@@ -120,7 +120,7 @@ impl PySafetyContext {
 #[pyo3(name = "_SafetyContextIter")]
 #[derive(Debug, Clone)]
 struct Iter {
-    lst: Py<PyList>,
+    ctx: Py<PySafetyContext>,
     idx: usize,
 }
 
@@ -130,10 +130,10 @@ impl Iter {
         this
     }
 
-    fn __next__(&mut self, py: Python<'_>) -> Option<Py<PyAny>> {
-        let result = self.lst.as_ref(py).get_item(self.idx).ok()?;
+    fn __next__(&mut self, py: Python<'_>) -> Option<Py<PyRuleSet>> {
+        let result = self.ctx.borrow(py).0.get(self.idx)?.clone();
         self.idx += 1;
-        Some(result.into())
+        Some(result)
     }
 
     fn __index__(&self) -> usize {
@@ -141,6 +141,6 @@ impl Iter {
     }
 
     fn __len__(&self, py: Python<'_>) -> usize {
-        self.lst.as_ref(py).len().saturating_sub(self.idx)
+        self.ctx.borrow(py).0.len().saturating_sub(self.idx)
     }
 }
