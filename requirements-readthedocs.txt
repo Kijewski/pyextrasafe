@@ -1,5 +1,5 @@
 # keep synchronous to Cargo.toml
-pyextrasafe == 0.0.0a0
+pyextrasafe == 0.0.0a1
 
 # keep synchronous to requirements-dev.txt
 furo == 2023.5.20
