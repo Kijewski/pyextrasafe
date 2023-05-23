@@ -85,6 +85,11 @@ Classes
 Built-in profiles
 -----------------
 
+All built-in profiles inherit from :class:`~pyextrasafe.RuleSet`.
+Adding custom profiles is not implemented, yet.
+
+All methods return :code:`self`\, so method calls can be chained.
+
 .. autoclass:: pyextrasafe.BasicCapabilities
     :members:
 

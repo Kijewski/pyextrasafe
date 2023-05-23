@@ -1,0 +1,13 @@
+section > dl {
+    border-style: solid;
+    border-width: 1ch;
+    padding: 1ch;
+}
+
+section > dl:nth-of-type(even) {
+    border-color: #33ff6615 #33ff6615 transparent transparent;
+}
+
+section > dl:nth-of-type(odd) {
+    border-color: #6633ff15 transparent transparent #6633ff15;
+}

@@ -33,6 +33,8 @@ todo_include_todos = False
 autoclass_content = "both"
 
 html_theme = "furo"
+html_static_path = ["_static"]
+html_css_files = ["custom.css"]
 
 project = "PyExtraSafe"
 copyright = "2023, René Kijewski"

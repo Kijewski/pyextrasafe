@@ -95,7 +95,7 @@ impl EnablePolicy for DataRuleSet {
     }
 }
 
-/// A RuleSet is a collection of seccomp rules that enable a functionality.
+/// A :class:`~pyextrasafe.RuleSet` is a collection of seccomp rules that enable a functionality.
 ///
 /// See also
 /// --------
@@ -143,7 +143,7 @@ macro_rules! impl_subclass {
         $extra:ty
     ) => {
         bitflags! {
-            #[derive(Default)]
+            #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
             struct $flags_name: u16 {
                 $( const $flag = $value; )*
             }
@@ -220,7 +220,12 @@ macro_rules! impl_subclass {
 }
 
 impl_subclass! {
-    /// TODO: Doc
+    /// A :class:`~pyextrasafe.RuleSet` allowing basic required syscalls to do things like allocate memory, and also a
+    /// few that are used by Rust to set up panic handling and segfault handlers.
+    ///
+    /// See also
+    /// --------
+    /// `Trait extrasafe::builtins::basic::BasicCapabilities <https://docs.rs/extrasafe/0.1.2/extrasafe/builtins/basic/struct.BasicCapabilities.html>`_
     "BasicCapabilities",
     PyBasicCapabilities,
     DataBasicCapabilities(FlagsBasicCapabilities),
@@ -229,7 +234,13 @@ impl_subclass! {
 }
 
 impl_subclass! {
-    /// TODO: Doc
+    /// ForkAndExec is in the danger zone because it can be used to start another process, including
+    /// more privileged ones. That process will still be under seccomp’s restrictions but depending
+    /// on your filter it could still do bad things.
+    ///
+    /// See also
+    /// --------
+    /// `Trait extrasafe::builtins::danger_zone::ForkAndExec <https://docs.rs/extrasafe/0.1.2/extrasafe/builtins/danger_zone/struct.ForkAndExec.html>`_
     "ForkAndExec",
     PyForkAndExec,
     DataForkAndExec(FlagsForkAndExec),
@@ -238,59 +249,91 @@ impl_subclass! {
 }
 
 impl_subclass! {
-    /// TODO: Doc
+    /// Allows clone and sleep syscalls, which allow creating new threads and processes, and pausing them.
+    ///
+    /// A new :class:`~pyextrasafe.Threads` ruleset allows nothing by default.
+    ///
+    /// See also
+    /// --------
+    /// `Trait extrasafe::builtins::danger_zone::Threads <https://docs.rs/extrasafe/0.1.2/extrasafe/builtins/danger_zone/struct.Threads.html>`_
     "Threads",
     PyThreads,
     DataThreads(FlagsThreads),
     policy: Threads = Threads::nothing() => {
-        /// TODO: Doc
+        /// Allow creating new threads and processes.
         [1 << 0] ALLOW_CREATE => allow_create [policy.allow_create()];
 
-        /// TODO: Doc
+        /// Allow sleeping on the current thread
+        ///
+        /// Warning
+        /// -------
+        /// An attacker with arbitrary code execution and access to a high resolution timer can mount timing attacks (e.g. spectre).
         [1 << 1] ALLOW_SLEEP => allow_sleep [policy.allow_sleep().yes_really()];
     }
     ()
 }
 
 impl_subclass! {
-    /// TODO: Doc
+    /// A :class:`~pyextrasafe.RuleSet` representing syscalls that perform network operations - accept/listen/bind/connect etc.
+    ///
+    /// By default, allow no networking syscalls.
+    ///
+    /// See also
+    /// --------
+    /// `Trait extrasafe::builtins::network::Networking <https://docs.rs/extrasafe/0.1.2/extrasafe/builtins/network/struct.Networking.html>`_
     "Networking",
     PyNetworking,
     DataNetworking(FlagsNetworking),
     policy: Networking = Networking::nothing() => {
-        /// TODO: Docs
+        /// Allow a running TCP client to continue running. Does not allow socket or connect to prevent new sockets from being created.
         [1 << 0] ALLOW_RUNNING_TCP_CLIENTS => allow_running_tcp_clients
         [policy.allow_running_tcp_clients()];
 
-        /// TODO: Docs
+        /// Allow a running TCP server to continue running. Does not allow socket or bind to prevent new sockets from being created.
         [1 << 1] ALLOW_RUNNING_TCP_SERVERS => allow_running_tcp_servers
         [policy.allow_running_tcp_servers()];
 
-        /// TODO: Docs
+        /// Allow a running UDP socket to continue running. Does not allow socket or bind to prevent new sockets from being created.
         [1 << 2] ALLOW_RUNNING_UDP_SOCKETS => allow_running_udp_sockets
         [policy.allow_running_udp_sockets()];
 
-        /// TODO: Docs
+        /// Allow a running Unix socket client to continue running. Does not allow socket or connect to prevent new sockets from being created.
         [1 << 3] ALLOW_RUNNING_UNIX_CLIENTS => allow_running_unix_clients
         [policy.allow_running_unix_clients()];
 
-        /// TODO: Docs
+        /// Allow a running Unix server to continue running. Does not allow socket or bind to prevent new sockets from being created.
         [1 << 4] ALLOW_RUNNING_UNIX_SERVERS => allow_running_unix_servers
         [policy.allow_running_unix_servers()];
 
-        /// TODO: Docs
+        /// Allow starting new TCP clients.
+        ///
+        /// Warnings
+        /// --------
+        /// In some cases you can create the socket ahead of time, but in case it is not, we allow socket but not bind here.
         [1 << 5] ALLOW_START_TCP_CLIENTS => allow_start_tcp_clients
         [policy.allow_start_tcp_clients()];
 
-        /// TODO: Docs
+        /// Allow starting new TCP servers.
+        ///
+        /// Warnings
+        /// --------
+        /// You probably don’t need to use this. In most cases you can just run your server and then use :meth:`.allow_running_tcp_servers()`.
         [1 << 6] ALLOW_START_TCP_SERVERS => allow_start_tcp_servers
         [policy.allow_start_tcp_servers().yes_really()];
 
-        /// TODO: Docs
+        /// Allow starting new UDP sockets.
+        ///
+        /// Warnings
+        /// --------
+        /// You probably don’t need to use this. In most cases you can just run your server and then use :meth:`.allow_running_udp_sockets`.
         [1 << 7] ALLOW_START_UDP_SERVERS => allow_start_udp_servers
         [policy.allow_start_udp_servers().yes_really()];
 
-        /// TODO: Docs
+        /// Allow starting new Unix domain servers
+        ///
+        /// Warnings
+        /// --------
+        /// You probably don’t need to use this. In most cases you can just run your server and then use :meth:`.allow_running_unix_servers`.
         [1 << 8] ALLOW_START_UNIX_SERVER => allow_start_unix_server
         [policy.allow_start_unix_server().yes_really()];
     }
@@ -318,48 +361,59 @@ impl EnableExtra<SystemIO> for ReadWriteFilenos {
 }
 
 impl_subclass! {
-    /// TODO: Doc
+    /// A :class:`~pyextrasafe.RuleSet` representing syscalls that perform IO - open/close/read/write/seek/stat.
+    ///
+    /// By default, allow no IO syscalls.
     "SystemIO",
     PySystemIO,
     DataSystemIO(FlagsSystemIO),
     policy: SystemIO = SystemIO::nothing() => {
-        /// TODO: Docs
+        /// Allow close syscalls.
         [1 << 0] ALLOW_CLOSE => allow_close
         [policy.allow_close()];
 
-        /// TODO: Docs
+        /// Allow ioctl and fcntl syscalls.
         [1 << 1] ALLOW_IOCTL => allow_ioctl
         [policy.allow_ioctl()];
 
-        /// TODO: Docs
+        /// Allow stat syscalls.
         [1 << 2] ALLOW_METADATA => allow_metadata
         [policy.allow_metadata()];
 
-        /// TODO: Docs
+        /// Allow open syscalls.
+        ///
+        /// Warnings
+        /// --------
+        /// It’s easy to accidentally combine this ruleset with another ruleset that allows write -
+        /// for example the Network ruleset - even if you only want to read files.
         [1 << 3] ALLOW_OPEN => allow_open
         [policy.allow_open().yes_really()];
 
-        /// TODO: Docs
+        /// Allow open syscalls but not with write flags.alloc
+        ///
+        /// Note
+        /// ----
+        /// The openat2 syscall is not supported here because it has a separate configuration struct instead of a flag bitset.
         [1 << 4] ALLOW_OPEN_READONLY => allow_open_readonly
         [policy.allow_open_readonly()];
 
-        /// TODO: Docs
+        /// Allow read syscalls.
         [1 << 5] ALLOW_READ => allow_read
         [policy.allow_read()];
 
-        /// TODO: Docs
+        /// Allow writing to stderr.
         [1 << 6] ALLOW_STDERR => allow_stderr
         [policy.allow_stderr()];
 
-        /// TODO: Docs
+        /// Allow reading from stdin.
         [1 << 7] ALLOW_STDIN => allow_stdin
         [policy.allow_stdin()];
 
-        /// TODO: Docs
+        /// Allow writing to stdout.
         [1 << 8] ALLOW_STDOUT => allow_stdout
         [policy.allow_stdout()];
 
-        /// TODO: Docs
+        /// Allow write syscalls.
         [1 << 9] ALLOW_WRITE => allow_write
         [policy.allow_write()];
     }
@@ -380,7 +434,12 @@ impl PySystemIO {
         Ok(pyo3::PyCell::new(py, init)?.to_object(py))
     }
 
-    /// TODO: Doc
+    /// Allow reading a given open file descriptor.
+    ///
+    /// Warning
+    /// -------
+    /// If another file or socket is opened after the file provided to this function is closed,
+    /// it’s possible that the fd will be reused and therefore may be read from.
     fn allow_file_read(
         mut this: PyRefMut<'_, Self>,
         fileno: RawFd,
@@ -393,7 +452,12 @@ impl PySystemIO {
         }
     }
 
-    /// TODO: Doc
+    /// Allow writing to a given open file descriptor.
+    ///
+    /// Warning
+    /// -------
+    /// If another file or socket is opened after the file provided to this function is closed,
+    /// it’s possible that the fd will be reused and therefore may be read from.
     fn allow_file_write(
         mut this: PyRefMut<'_, Self>,
         fileno: RawFd,
@@ -418,12 +482,16 @@ fn insert_sorted_fileno(vec: &mut Vec<RawFd>, fileno: RawFd) -> PyResult<()> {
 }
 
 impl_subclass! {
-    /// TODO: Doc
+    /// Enable syscalls related to time.
+    ///
+    /// A new Time RuleSet allows nothing by default.
     "Time",
     PyTime,
     DataTime(FlagsTime),
     policy: Time = Time::nothing() => {
-        /// TODO: Docs
+        /// On most 64 bit systems glibc and musl both use the vDSO to compute the time directly
+        /// with rdtsc rather than calling the clock_gettime syscall, so in most cases you don’t
+        /// need to actually enable this.
         [1 << 0] ALLOW_GETTIME => allow_gettime
         [policy.allow_gettime()];
     }
