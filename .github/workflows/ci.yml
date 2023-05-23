@@ -137,11 +137,6 @@ jobs:
           python3 -m pip install -U pip
           python3 -m pip install -Ur requirements-dev.txt
 
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
-        with:
-          languages: 'python'
-
       - name: Build
         run: python3 -m build --no-isolation
 
@@ -157,7 +152,26 @@ jobs:
       - name: Test
         run: python3 hello-world.py
 
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
+  devskim:
+    name: DevSkim
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
         with:
-          category: "/language:python"
+          submodules: recursive
+
+      - name: Run DevSkim scanner
+        uses: microsoft/DevSkim-Action@v1
+        with:
+          should-scan-archives: true
+          directory-to-scan: 
+
+      - name: Upload DevSkim scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: devskim-results.sarif
