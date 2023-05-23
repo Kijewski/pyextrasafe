@@ -12,10 +12,11 @@ allowing the syscalls it can perform via the Linux kernel’s seccomp facilities
 
 The python library is a shallow wrapper around [extrasafe](https://docs.rs/extrasafe/0.1.2/extrasafe/index.html).
 
+### Quick Example
+
 ```python
 from threading import Thread
 import pyextrasafe
-
 
 try:
     thread = Thread(target=print, args=["Hello, world!"])
@@ -24,10 +25,10 @@ try:
 except Exception:
     print("Could not run Thread (should have been able!)")
 
-ctx = pyextrasafe.SafetyContext()
-ctx.enable(pyextrasafe.BasicCapabilities())
-ctx.enable(pyextrasafe.SystemIO().allow_stdout().allow_stderr())
-ctx.apply_to_all_threads()
+pyextrasafe.SafetyContext().enable(
+    pyextrasafe.BasicCapabilities(),
+    pyextrasafe.SystemIO().allow_stdout().allow_stderr(),
+).apply_to_all_threads()
 
 try:
     thread = Thread(target=print, args=["Hello, world!"])

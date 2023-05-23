@@ -49,7 +49,6 @@ Quick Example
     from threading import Thread
     import pyextrasafe
 
-
     try:
         thread = Thread(target=print, args=["Hello, world!"])
         thread.start()
@@ -57,10 +56,10 @@ Quick Example
     except Exception:
         print("Could not run Thread (should have been able!)")
 
-    ctx = pyextrasafe.SafetyContext()
-    ctx.enable(pyextrasafe.BasicCapabilities())
-    ctx.enable(pyextrasafe.SystemIO().allow_stdout().allow_stderr())
-    ctx.apply_to_all_threads()
+    pyextrasafe.SafetyContext().enable(
+        pyextrasafe.BasicCapabilities(),
+        pyextrasafe.SystemIO().allow_stdout().allow_stderr(),
+    ).apply_to_all_threads()
 
     try:
         thread = Thread(target=print, args=["Hello, world!"])
