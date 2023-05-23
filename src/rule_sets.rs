@@ -299,8 +299,8 @@ impl_subclass! {
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct ReadWriteFilenos {
-    rd: Vec<i32>,
-    wr: Vec<i32>,
+    rd: Vec<RawFd>,
+    wr: Vec<RawFd>,
 }
 
 impl EnableExtra<SystemIO> for ReadWriteFilenos {
@@ -381,7 +381,10 @@ impl PySystemIO {
     }
 
     /// TODO: Doc
-    fn allow_file_read(mut this: PyRefMut<'_, Self>, fileno: i32) -> PyResult<PyRefMut<'_, Self>> {
+    fn allow_file_read(
+        mut this: PyRefMut<'_, Self>,
+        fileno: RawFd,
+    ) -> PyResult<PyRefMut<'_, Self>> {
         if let DataRuleSet::PySystemIO(data) = &mut this.as_mut().0 {
             insert_sorted_fileno(&mut data.extra.rd, fileno)?;
             Ok(this)
@@ -391,7 +394,10 @@ impl PySystemIO {
     }
 
     /// TODO: Doc
-    fn allow_file_write(mut this: PyRefMut<'_, Self>, fileno: i32) -> PyResult<PyRefMut<'_, Self>> {
+    fn allow_file_write(
+        mut this: PyRefMut<'_, Self>,
+        fileno: RawFd,
+    ) -> PyResult<PyRefMut<'_, Self>> {
         if let DataRuleSet::PySystemIO(data) = &mut this.as_mut().0 {
             insert_sorted_fileno(&mut data.extra.wr, fileno)?;
             Ok(this)
@@ -401,8 +407,8 @@ impl PySystemIO {
     }
 }
 
-fn insert_sorted_fileno(vec: &mut Vec<i32>, fileno: i32) -> PyResult<()> {
-    if fileno == u32::MAX as RawFd {
+fn insert_sorted_fileno(vec: &mut Vec<RawFd>, fileno: RawFd) -> PyResult<()> {
+    if fileno < 0 {
         return Err(ExtraSafeError::new_err("illegal fileno"));
     }
     if let Err(pos) = vec.binary_search(&fileno) {
