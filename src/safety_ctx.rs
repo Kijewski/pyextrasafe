@@ -90,14 +90,15 @@ impl PySafetyContext {
     }
 
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
-        let mut s = String::new();
-        for policy in &self.0 {
-            if !s.is_empty() {
+        let mut s = "<SafetyContext [".to_owned();
+        for (idx, policy) in self.0.iter().enumerate() {
+            if idx > 0 {
                 s.push_str(", ");
             }
             s.push_str(policy.as_ref(py).repr()?.to_str()?);
         }
-        Ok(format!("<SafetyContext [{s}]>"))
+        s.push_str("]>");
+        Ok(s)
     }
 
     fn __iter__(ctx: PyRef<'_, Self>) -> SafetyContextIter {
