@@ -55,10 +55,10 @@ impl PySafetyContext {
     /// TypeError
     ///     Argument was not an instance of :class:`~pyextrasafe.RuleSet`.
     #[pyo3(signature = (*policies))]
-    fn enable<'p>(
-        mut ctx: PyRefMut<'p, Self>,
+    fn enable(
+        mut ctx: PyRefMut<'_, Self>,
         mut policies: Vec<Py<PyRuleSet>>,
-    ) -> PyResult<PyRefMut<'p, Self>> {
+    ) -> PyResult<PyRefMut<'_, Self>> {
         ctx.0.append(&mut policies);
         Ok(ctx)
     }
@@ -100,8 +100,8 @@ impl PySafetyContext {
         Ok(format!("<SafetyContext [{s}]>"))
     }
 
-    fn __iter__(ctx: PyRef<'_, Self>) -> Iter {
-        Iter {
+    fn __iter__(ctx: PyRef<'_, Self>) -> SafetyContextIter {
+        SafetyContextIter {
             ctx: ctx.into(),
             idx: 0,
         }
@@ -119,13 +119,13 @@ impl PySafetyContext {
 #[pyclass]
 #[pyo3(name = "_SafetyContextIter")]
 #[derive(Debug, Clone)]
-struct Iter {
+struct SafetyContextIter {
     ctx: Py<PySafetyContext>,
     idx: usize,
 }
 
 #[pymethods]
-impl Iter {
+impl SafetyContextIter {
     fn __iter__(this: PyRef<'_, Self>) -> PyRef<'_, Self> {
         this
     }
