@@ -1,5 +1,7 @@
+use std::collections::hash_map::DefaultHasher;
 use std::fmt::{self, Write};
 use std::fs::File;
+use std::hash::{Hash, Hasher};
 use std::mem::ManuallyDrop;
 use std::os::fd::{FromRawFd, RawFd};
 
@@ -8,6 +10,7 @@ use extrasafe::builtins::danger_zone::{ForkAndExec, Threads};
 use extrasafe::builtins::network::Networking;
 use extrasafe::builtins::{BasicCapabilities, SystemIO, Time};
 use extrasafe::SafetyContext;
+use pyo3::pyclass::CompareOp;
 use pyo3::{
     pyclass, pymethods, Py, PyAny, PyClassInitializer, PyRef, PyRefMut, PyResult, Python,
     ToPyObject,
@@ -62,7 +65,7 @@ pub(crate) trait EnablePolicy {
     fn enable_to(&self, ctx: SafetyContext) -> Result<SafetyContext, extrasafe::ExtraSafeError>;
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 enum DataRuleSet {
     PyBasicCapabilities(DataBasicCapabilities),
     PyForkAndExec(DataForkAndExec),
@@ -104,6 +107,26 @@ pub(crate) struct PyRuleSet(DataRuleSet);
 
 unsafe impl pyo3::PyNativeType for PyRuleSet {}
 
+#[pymethods]
+impl PyRuleSet {
+    fn __richcmp__(&self, other: &Self, op: CompareOp) -> PyResult<bool> {
+        match op {
+            CompareOp::Lt => Ok(self.0 < other.0),
+            CompareOp::Le => Ok(self.0 <= other.0),
+            CompareOp::Eq => Ok(self.0 == other.0),
+            CompareOp::Ne => Ok(self.0 != other.0),
+            CompareOp::Gt => Ok(self.0 > other.0),
+            CompareOp::Ge => Ok(self.0 >= other.0),
+        }
+    }
+
+    fn __hash__(&self) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        self.0.hash(&mut hasher);
+        hasher.finish()
+    }
+}
+
 macro_rules! impl_subclass {
     (
         $(#[$meta:meta])*
@@ -120,12 +143,13 @@ macro_rules! impl_subclass {
         $extra:ty
     ) => {
         bitflags! {
+            #[derive(Default)]
             struct $flags_name: u16 {
                 $( const $flag = $value; )*
             }
         }
 
-        #[derive(Debug, Clone)]
+        #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
         struct $data_name {
             flags: $flags_name,
             #[allow(dead_code)]
@@ -163,11 +187,7 @@ macro_rules! impl_subclass {
         impl $py_name {
             #[new]
             fn new() -> (Self, PyRuleSet) {
-                let value = $data_name {
-                    flags: <$flags_name>::empty(),
-                    extra: Default::default(),
-                };
-                (Self, PyRuleSet(DataRuleSet::$py_name(value.into())))
+                (Self, PyRuleSet(DataRuleSet::$py_name(<$data_name>::default().into())))
             }
 
             $(
@@ -277,7 +297,7 @@ impl_subclass! {
     ()
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct ReadWriteFilenos {
     rd: Vec<i32>,
     wr: Vec<i32>,
@@ -362,11 +382,8 @@ impl PySystemIO {
 
     /// TODO: Doc
     fn allow_file_read(mut this: PyRefMut<'_, Self>, fileno: i32) -> PyResult<PyRefMut<'_, Self>> {
-        if fileno == u32::MAX as RawFd {
-            return Err(ExtraSafeError::new_err("illegal fileno"));
-        }
         if let DataRuleSet::PySystemIO(data) = &mut this.as_mut().0 {
-            data.extra.rd.push(fileno);
+            insert_sorted_fileno(&mut data.extra.rd, fileno)?;
             Ok(this)
         } else {
             unreachable!("Impossible content")
@@ -375,16 +392,23 @@ impl PySystemIO {
 
     /// TODO: Doc
     fn allow_file_write(mut this: PyRefMut<'_, Self>, fileno: i32) -> PyResult<PyRefMut<'_, Self>> {
-        if fileno == u32::MAX as RawFd {
-            return Err(ExtraSafeError::new_err("illegal fileno"));
-        }
         if let DataRuleSet::PySystemIO(data) = &mut this.as_mut().0 {
-            data.extra.wr.push(fileno);
+            insert_sorted_fileno(&mut data.extra.wr, fileno)?;
             Ok(this)
         } else {
             unreachable!("Impossible content")
         }
     }
+}
+
+fn insert_sorted_fileno(vec: &mut Vec<i32>, fileno: i32) -> PyResult<()> {
+    if fileno == u32::MAX as RawFd {
+        return Err(ExtraSafeError::new_err("illegal fileno"));
+    }
+    if let Err(pos) = vec.binary_search(&fileno) {
+        vec.insert(pos, fileno);
+    }
+    Ok(())
 }
 
 impl_subclass! {
