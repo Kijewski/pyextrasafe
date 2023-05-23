@@ -50,7 +50,7 @@ jobs:
             yum -y update || true
             apt-get -y install libseccomp-dev || true
             yum -y install libseccomp-devel || true
-          CIBW_TEST_COMMAND: ./hello-world.py
+          CIBW_TEST_COMMAND: python3 {project}/hello-world.py
 
       - name: Store artifacts
         uses: actions/upload-artifact@v3

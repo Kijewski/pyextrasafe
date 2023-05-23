@@ -11,3 +11,30 @@ PyExtraSafe is a library that makes it easy to improve your program’s security
 allowing the syscalls it can perform via the Linux kernel’s seccomp facilities.
 
 The python library is a shallow wrapper around [extrasafe](https://docs.rs/extrasafe/0.1.2/extrasafe/index.html).
+
+```python
+from threading import Thread
+import pyextrasafe
+
+
+try:
+    thread = Thread(target=print, args=["Hello, world!"])
+    thread.start()
+    thread.join()
+except Exception:
+    print("Could not run Thread (should have been able!)")
+
+ctx = pyextrasafe.SafetyContext()
+ctx.enable(pyextrasafe.BasicCapabilities())
+ctx.enable(pyextrasafe.SystemIO().allow_stdout().allow_stderr())
+ctx.apply_to_all_threads()
+
+try:
+    thread = Thread(target=print, args=["Hello, world!"])
+    thread.start()
+    thread.join()
+except Exception:
+    print("Could not run Thread (that's good!)")
+else:
+    raise Exception("Should not have been able to run thread")
+```

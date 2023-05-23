@@ -13,10 +13,95 @@
 # limitations under the License
 
 """
+PyExtraSafe
+===========
+
+.. |GitHub Workflow Status| image:: https://img.shields.io/github/actions/workflow/status/Kijewski/pyextrasafe/ci.yml?branch=main&logo=github&logoColor=efefef&style=flat-square
+   :target: https://github.com/Kijewski/pyextrasafe/actions/workflows/ci.yml
+.. |Documentation Status| image:: https://img.shields.io/readthedocs/pyextrasafe?logo=readthedocs&logoColor=efefef&style=flat-square
+   :target: https://pyextrasafe.readthedocs.io/
+.. |PyPI| image:: https://img.shields.io/pypi/v/pyextrasafe?logo=pypi&logoColor=efefef&style=flat-square
+   :target: https://pypi.org/project/pyextrasafe/
+.. |Python >= 3.8| image:: https://img.shields.io/badge/python-%E2%89%A5%203.8-informational?logo=python&logoColor=efefef&style=flat-square
+   :target: https://www.python.org/
+.. |OS: Linux| image:: https://img.shields.io/badge/os-linux-informational?logo=linux&logoColor=efefef&style=flat-square
+   :target: https://kernel.org/
+.. |License| image:: https://img.shields.io/badge/license-Apache--2.0-informational?logo=apache&logoColor=efefef&style=flat-square
+   :target: https://github.com/Kijewski/pyextrasafe/blob/main/LICENSE.md
+
+|GitHub Workflow Status|
+|Documentation Status|
+|PyPI|
+|Python >= 3.8|
+|OS: Linux|
+|License|
+
 PyExtraSafe is a library that makes it easy to improve your program’s security by selectively
 allowing the syscalls it can perform via the Linux kernel’s seccomp facilities.
 
 The Python library is a shallow wrapper around `extrasafe <https://docs.rs/extrasafe/0.1.2/extrasafe/index.html>`_.
+
+Quick Example
+-------------
+
+.. code-block:: python
+
+    from threading import Thread
+    import pyextrasafe
+
+
+    try:
+        thread = Thread(target=print, args=["Hello, world!"])
+        thread.start()
+        thread.join()
+    except Exception:
+        print("Could not run Thread (should have been able!)")
+
+    ctx = pyextrasafe.SafetyContext()
+    ctx.enable(pyextrasafe.BasicCapabilities())
+    ctx.enable(pyextrasafe.SystemIO().allow_stdout().allow_stderr())
+    ctx.apply_to_all_threads()
+
+    try:
+        thread = Thread(target=print, args=["Hello, world!"])
+        thread.start()
+        thread.join()
+    except Exception:
+        print("Could not run Thread (that's good!)")
+    else:
+        raise Exception("Should not have been able to run thread")
+
+Classes
+-------
+
+.. autoclass:: pyextrasafe.SafetyContext
+    :members:
+
+.. autoclass:: pyextrasafe.RuleSet
+    :members:
+
+.. autoexception:: pyextrasafe.ExtraSafeError
+
+Built-in profiles
+-----------------
+
+.. autoclass:: pyextrasafe.BasicCapabilities
+    :members:
+
+.. autoclass:: pyextrasafe.ForkAndExec
+    :members:
+
+.. autoclass:: pyextrasafe.Threads
+    :members:
+
+.. autoclass:: pyextrasafe.Networking
+    :members:
+
+.. autoclass:: pyextrasafe.SystemIO
+    :members:
+
+.. autoclass:: pyextrasafe.Time
+    :members:
 """
 
 from pyextrasafe._pyextrasafe import (
