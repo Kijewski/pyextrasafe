@@ -1,5 +1,4 @@
-use std::any::Any;
-use std::fmt::Write;
+use std::fmt::{self, Write};
 use std::fs::File;
 use std::mem::ManuallyDrop;
 use std::os::fd::{FromRawFd, RawFd};
@@ -10,34 +9,87 @@ use extrasafe::builtins::network::Networking;
 use extrasafe::builtins::{BasicCapabilities, SystemIO, Time};
 use extrasafe::SafetyContext;
 use pyo3::{
-    pyclass, pymethods, Py, PyAny, PyClassInitializer, PyRefMut, PyResult, Python, ToPyObject,
+    pyclass, pymethods, Py, PyAny, PyClassInitializer, PyRef, PyRefMut, PyResult, Python,
+    ToPyObject,
 };
 
 use crate::ExtraSafeError;
-
-fn downcast_any_rule<P: Any>(data: &mut dyn RuleSetData) -> PyResult<&mut P> {
-    data.to_any()
-        .downcast_mut::<P>()
-        .ok_or_else(|| ExtraSafeError::new_err("illegal downcast (impossible)"))
-}
 
 trait EnableExtra<P> {
     fn enable_extra(&self, policy: P) -> P;
 }
 
 impl<P> EnableExtra<P> for () {
-    #[inline(always)]
+    #[inline]
     fn enable_extra(&self, policy: P) -> P {
         policy
     }
 }
 
-pub(crate) trait RuleSetData: Any + Send + Sync + std::fmt::Debug {
+struct ReprExtra<'a, D>(&'a D);
+
+const _: () = {
+    impl<D: DebugExtra> fmt::Display for ReprExtra<'_, D> {
+        fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+            self.0.format_to(formatter)
+        }
+    }
+
+    trait DebugExtra {
+        fn format_to(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result;
+    }
+
+    impl DebugExtra for () {
+        #[inline]
+        fn format_to(&self, _: &mut fmt::Formatter<'_>) -> fmt::Result {
+            Ok(())
+        }
+    }
+
+    impl DebugExtra for ReadWriteFilenos {
+        fn format_to(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+            formatter.write_str(", ")?;
+            formatter
+                .debug_map()
+                .entry(&"rd", &self.rd)
+                .entry(&"wr", &self.wr)
+                .finish()
+        }
+    }
+};
+
+pub(crate) trait EnablePolicy {
     fn enable_to(&self, ctx: SafetyContext) -> Result<SafetyContext, extrasafe::ExtraSafeError>;
+}
 
-    fn to_any(&mut self) -> &mut dyn Any;
+#[derive(Debug, Clone)]
+enum DataRuleSet {
+    PyBasicCapabilities(DataBasicCapabilities),
+    PyForkAndExec(DataForkAndExec),
+    PyThreads(DataThreads),
+    PyNetworking(DataNetworking),
+    PySystemIO(Box<DataSystemIO>),
+    PyTime(DataTime),
+}
 
-    fn clone_box(&self) -> Box<dyn RuleSetData>;
+impl EnablePolicy for PyRuleSet {
+    #[inline]
+    fn enable_to(&self, ctx: SafetyContext) -> Result<SafetyContext, extrasafe::ExtraSafeError> {
+        self.0.enable_to(ctx)
+    }
+}
+
+impl EnablePolicy for DataRuleSet {
+    fn enable_to(&self, ctx: SafetyContext) -> Result<SafetyContext, extrasafe::ExtraSafeError> {
+        match self {
+            DataRuleSet::PyBasicCapabilities(policy) => policy.enable_to(ctx),
+            DataRuleSet::PyForkAndExec(policy) => policy.enable_to(ctx),
+            DataRuleSet::PyThreads(policy) => policy.enable_to(ctx),
+            DataRuleSet::PyNetworking(policy) => policy.enable_to(ctx),
+            DataRuleSet::PySystemIO(policy) => policy.enable_to(ctx),
+            DataRuleSet::PyTime(policy) => policy.enable_to(ctx),
+        }
+    }
 }
 
 /// A RuleSet is a collection of seccomp rules that enable a functionality.
@@ -47,13 +99,10 @@ pub(crate) trait RuleSetData: Any + Send + Sync + std::fmt::Debug {
 /// `Trait extrasafe::RuleSet <https://docs.rs/extrasafe/0.1.2/extrasafe/trait.RuleSet.html>`_
 #[pyclass]
 #[pyo3(name = "RuleSet", module = "pyextrasafe", subclass)]
-pub(crate) struct PyRuleSet(Box<dyn RuleSetData>);
+#[derive(Debug, Clone)]
+pub(crate) struct PyRuleSet(DataRuleSet);
 
-impl PyRuleSet {
-    pub(crate) fn clone_inner(&self) -> Box<dyn RuleSetData> {
-        self.0.clone_box()
-    }
-}
+unsafe impl pyo3::PyNativeType for PyRuleSet {}
 
 macro_rules! impl_subclass {
     (
@@ -71,7 +120,7 @@ macro_rules! impl_subclass {
         $extra:ty
     ) => {
         bitflags! {
-            struct $flags_name: u32 {
+            struct $flags_name: u16 {
                 $( const $flag = $value; )*
             }
         }
@@ -83,23 +132,7 @@ macro_rules! impl_subclass {
             extra: $extra,
         }
 
-        impl std::ops::Deref for $data_name {
-            type Target = $flags_name;
-
-            #[inline(always)]
-            fn deref(&self) -> &Self::Target {
-                &self.flags
-            }
-        }
-
-        impl std::ops::DerefMut for $data_name {
-            #[inline(always)]
-            fn deref_mut(&mut self) -> &mut Self::Target {
-                &mut self.flags
-            }
-        }
-
-        impl RuleSetData for $data_name {
+        impl EnablePolicy for $data_name {
             fn enable_to(
                 &self,
                 ctx: SafetyContext,
@@ -119,32 +152,12 @@ macro_rules! impl_subclass {
 
                 ctx.enable($policy)
             }
-
-            fn to_any(&mut self) -> &mut dyn Any {
-                self
-            }
-
-            fn clone_box(&self) -> Box<dyn RuleSetData> {
-                Box::new(Self::clone(self))
-            }
         }
 
         #[pyclass]
         #[pyo3(name = $name_str, module = "pyextrasafe", extends = PyRuleSet)]
         $(#[$meta])*
         pub(crate) struct $py_name;
-
-        impl $py_name {
-            fn _allow(
-                mut this: PyRefMut<'_, Self>,
-                bit: $flags_name,
-            ) -> PyResult<PyRefMut<'_, Self>> {
-                let any_data = this.as_mut().0.as_mut();
-                let $data_name { flags, .. } = downcast_any_rule(any_data)?;
-                *flags |= bit;
-                Ok(this)
-            }
-        }
 
         #[pymethods]
         impl $py_name {
@@ -154,22 +167,33 @@ macro_rules! impl_subclass {
                     flags: <$flags_name>::empty(),
                     extra: Default::default(),
                 };
-                (Self, PyRuleSet(Box::new(value) as Box<dyn RuleSetData>))
+                (Self, PyRuleSet(DataRuleSet::$py_name(value.into())))
             }
 
             $(
-            fn $func(this: PyRefMut<'_, Self>) -> PyResult<PyRefMut<'_, Self>> {
-                Self::_allow(this, <$flags_name>::$flag)
+            $(#[$flag_meta])*
+            fn $func(mut this: PyRefMut<'_, Self>) -> PyResult<PyRefMut<'_, Self>> {
+                if let DataRuleSet::$py_name(data) = &mut this.as_mut().0 {
+                    data.flags |= <$flags_name>::$flag;
+                    Ok(this)
+                } else {
+                    unreachable!("Impossible content")
+                }
             }
             )*
 
-            fn __repr__(mut this: PyRefMut<'_, Self>) -> PyResult<String> {
-                let any_data = this.as_mut().0.as_mut();
-                let data: &mut $data_name = downcast_any_rule(any_data)?;
-                let mut result = String::new();
-                write!(result, "<{}({:?}, {:?})>", $name_str, &data.flags, &data.extra)
-                    .map_err(|err| ExtraSafeError::new_err(format!("could not debug??: {err}")))?;
-                Ok(result)
+            fn __repr__(this: PyRef<'_, Self>) -> PyResult<String> {
+                let DataRuleSet::$py_name(data) = &this.as_ref().0 else {
+                    unreachable!("Impossible content");
+                };
+
+                let mut s = String::new();
+                write!(s, "<{}({:?}{})>", $name_str, &data.flags, ReprExtra(&data.extra))
+                    .map_err(|err| {
+                        let msg = format!("could not debug??: {err}");
+                        ExtraSafeError::new_err(msg)
+                    })?;
+                Ok(s)
             }
         }
     };
@@ -329,10 +353,10 @@ impl PySystemIO {
     fn everything(py: Python<'_>) -> PyResult<Py<PyAny>> {
         let value = DataSystemIO {
             flags: FlagsSystemIO::all(),
-            extra: ReadWriteFilenos::default(),
+            extra: Default::default(),
         };
-        let value = Box::new(value) as Box<dyn RuleSetData>;
-        let init = PyClassInitializer::from(PyRuleSet(value)).add_subclass(PySystemIO);
+        let value = PyRuleSet(DataRuleSet::PySystemIO(value.into()));
+        let init = PyClassInitializer::from(value).add_subclass(Self);
         Ok(pyo3::PyCell::new(py, init)?.to_object(py))
     }
 
@@ -341,11 +365,12 @@ impl PySystemIO {
         if fileno == u32::MAX as RawFd {
             return Err(ExtraSafeError::new_err("illegal fileno"));
         }
-
-        let any_data = this.as_mut().0.as_mut();
-        let data: &mut DataSystemIO = downcast_any_rule(any_data)?;
-        data.extra.rd.push(fileno);
-        Ok(this)
+        if let DataRuleSet::PySystemIO(data) = &mut this.as_mut().0 {
+            data.extra.rd.push(fileno);
+            Ok(this)
+        } else {
+            unreachable!("Impossible content")
+        }
     }
 
     /// TODO: Doc
@@ -353,11 +378,12 @@ impl PySystemIO {
         if fileno == u32::MAX as RawFd {
             return Err(ExtraSafeError::new_err("illegal fileno"));
         }
-
-        let any_data = this.as_mut().0.as_mut();
-        let data: &mut DataSystemIO = downcast_any_rule(any_data)?;
-        data.extra.wr.push(fileno);
-        Ok(this)
+        if let DataRuleSet::PySystemIO(data) = &mut this.as_mut().0 {
+            data.extra.wr.push(fileno);
+            Ok(this)
+        } else {
+            unreachable!("Impossible content")
+        }
     }
 }
 
