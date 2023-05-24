@@ -36,12 +36,13 @@
 //! PyExtraSafe is a library that makes it easy to improve your program’s security by selectively
 //! allowing the syscalls it can perform via the Linux kernel’s seccomp facilities.
 
+mod additional;
 mod rule_sets;
 mod safety_ctx;
 
 use pyo3::exceptions::PyException;
 use pyo3::types::PyModule;
-use pyo3::{pymodule, PyResult, PyTypeInfo, Python};
+use pyo3::{pymodule, wrap_pyfunction, PyResult, PyTypeInfo, Python};
 
 pyo3::create_exception!(
     pyextrasafe,
@@ -64,5 +65,7 @@ fn _pyextrasafe(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add("__license__", env!("CARGO_PKG_LICENSE"))?;
     m.add("__version__", env!("pyextrasafe-version"))?;
     m.add("ExtraSafeError", ExtraSafeError::type_object(py))?;
+    m.add_function(wrap_pyfunction!(self::additional::restrict_privileges, m)?)?;
+    m.add_function(wrap_pyfunction!(self::additional::lock_pid_file, m)?)?;
     Ok(())
 }

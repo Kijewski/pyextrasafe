@@ -1,4 +1,5 @@
-from typing import NewType
+from os import Path
+from typing import BinaryIO, NewType, Optional, Union
 
 Rule = NewType("Rule", list[str])
 Sysno = NewType("Sysno", int)
@@ -114,3 +115,16 @@ class Time(RuleSet):
         "A new Time RuleSet allows nothing by default."
     def allow_gettime(self) -> Time:
         "On most 64 bit systems glibc and musl both use the vDSO to compute the time directly with rdtsc rather than calling the clock_gettime syscall, so in most cases you don’t need to actually enable this."
+
+def restrict_privileges() -> None:
+    "Basic security setup to prevent bootstrapping attacks."
+
+def lock_pid_file(
+    path: Union[str, Path],
+    *,
+    closefd: bool = False,
+    cloexec: bool = True,
+    mode: int = 0o640,
+    contents: Optional[bytes] = None,
+) -> BinaryIO:
+    "Open and file-lock a PID file to prevent running multiple instances of a program."

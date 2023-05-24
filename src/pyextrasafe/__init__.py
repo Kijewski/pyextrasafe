@@ -106,6 +106,16 @@ All methods return :code:`self`\, so method calls can be chained.
 
 .. autoclass:: pyextrasafe.Time
     :members:
+
+Helper functions
+----------------
+
+These functions are not part of `extrasafe <https://docs.rs/extrasafe/0.1.2/extrasafe/index.html>`_\,
+but they might come in handy anyways.
+
+.. autofunction:: pyextrasafe.lock_pid_file
+
+.. autofunction:: pyextrasafe.restrict_privileges
 """
 
 from pyextrasafe._pyextrasafe import (
@@ -121,6 +131,8 @@ from pyextrasafe._pyextrasafe import (
     SystemIO,
     Threads,
     Time,
+    lock_pid_file,
+    restrict_privileges,
 )
 
 
@@ -128,10 +140,12 @@ __all__ = [
     "BasicCapabilities",
     "ExtraSafeError",
     "ForkAndExec",
+    "Networking",
     "RuleSet",
     "SafetyContext",
-    "Threads",
-    "Networking",
     "SystemIO",
+    "Threads",
     "Time",
+    "lock_pid_file",
+    "restrict_privileges",
 ]

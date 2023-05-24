@@ -12,8 +12,8 @@ use extrasafe::builtins::{BasicCapabilities, SystemIO, Time};
 use extrasafe::SafetyContext;
 use pyo3::pyclass::CompareOp;
 use pyo3::{
-    pyclass, pymethods, Py, PyAny, PyClassInitializer, PyRef, PyRefMut, PyResult, Python,
-    ToPyObject,
+    pyclass, pymethods, AsPyPointer, Py, PyAny, PyClassInitializer, PyRef, PyRefMut, PyResult,
+    Python, ToPyObject,
 };
 
 use crate::ExtraSafeError;
@@ -51,11 +51,17 @@ const _: () = {
 
     impl DebugExtra for ReadWriteFilenos {
         fn format_to(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+            let rd = self.rd.as_slice();
+            let wr = self.wr.as_slice();
+            if rd.is_empty() && wr.is_empty() {
+                return Ok(());
+            }
+
             formatter.write_str(", ")?;
             formatter
                 .debug_map()
-                .entry(&"rd", &self.rd)
-                .entry(&"wr", &self.wr)
+                .entry(&"rd", &rd)
+                .entry(&"wr", &wr)
                 .finish()
         }
     }
@@ -109,14 +115,19 @@ unsafe impl pyo3::PyNativeType for PyRuleSet {}
 
 #[pymethods]
 impl PyRuleSet {
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> PyResult<bool> {
+    fn __richcmp__(left: PyRef<'_, Self>, right: PyRef<'_, Self>, op: CompareOp) -> bool {
+        let order = if left.as_ptr() == right.as_ptr() {
+            std::cmp::Ordering::Equal
+        } else {
+            left.0.cmp(&right.0)
+        };
         match op {
-            CompareOp::Lt => Ok(self.0 < other.0),
-            CompareOp::Le => Ok(self.0 <= other.0),
-            CompareOp::Eq => Ok(self.0 == other.0),
-            CompareOp::Ne => Ok(self.0 != other.0),
-            CompareOp::Gt => Ok(self.0 > other.0),
-            CompareOp::Ge => Ok(self.0 >= other.0),
+            CompareOp::Lt => order.is_lt(),
+            CompareOp::Le => order.is_le(),
+            CompareOp::Eq => order.is_eq(),
+            CompareOp::Ne => order.is_ne(),
+            CompareOp::Gt => order.is_gt(),
+            CompareOp::Ge => order.is_ge(),
         }
     }
 
@@ -240,7 +251,7 @@ impl_subclass! {
     ///
     /// See also
     /// --------
-    /// `Trait extrasafe::builtins::danger_zone::ForkAndExec <https://docs.rs/extrasafe/0.1.2/extrasafe/builtins/danger_zone/struct.ForkAndExec.html>`_
+    /// `Struct extrasafe::builtins::danger_zone::ForkAndExec <https://docs.rs/extrasafe/0.1.2/extrasafe/builtins/danger_zone/struct.ForkAndExec.html>`_
     "ForkAndExec",
     PyForkAndExec,
     DataForkAndExec(FlagsForkAndExec),
@@ -255,7 +266,7 @@ impl_subclass! {
     ///
     /// See also
     /// --------
-    /// `Trait extrasafe::builtins::danger_zone::Threads <https://docs.rs/extrasafe/0.1.2/extrasafe/builtins/danger_zone/struct.Threads.html>`_
+    /// `Struct extrasafe::builtins::danger_zone::Threads <https://docs.rs/extrasafe/0.1.2/extrasafe/builtins/danger_zone/struct.Threads.html>`_
     "Threads",
     PyThreads,
     DataThreads(FlagsThreads),
@@ -280,7 +291,7 @@ impl_subclass! {
     ///
     /// See also
     /// --------
-    /// `Trait extrasafe::builtins::network::Networking <https://docs.rs/extrasafe/0.1.2/extrasafe/builtins/network/struct.Networking.html>`_
+    /// `Struct extrasafe::builtins::network::Networking <https://docs.rs/extrasafe/0.1.2/extrasafe/builtins/network/struct.Networking.html>`_
     "Networking",
     PyNetworking,
     DataNetworking(FlagsNetworking),
@@ -364,6 +375,10 @@ impl_subclass! {
     /// A :class:`~pyextrasafe.RuleSet` representing syscalls that perform IO - open/close/read/write/seek/stat.
     ///
     /// By default, allow no IO syscalls.
+    ///
+    /// See also
+    /// --------
+    /// `Struct extrasafe::builtins::systemio::SystemIO <https://docs.rs/extrasafe/0.1.2/extrasafe/builtins/systemio/struct.SystemIO.html>`_
     "SystemIO",
     PySystemIO,
     DataSystemIO(FlagsSystemIO),
@@ -423,7 +438,7 @@ impl_subclass! {
 #[pymethods]
 impl PySystemIO {
     #[staticmethod]
-    /// TODO: Doc
+    /// Allow all IO syscalls.
     fn everything(py: Python<'_>) -> PyResult<Py<PyAny>> {
         let value = DataSystemIO {
             flags: FlagsSystemIO::all(),
@@ -484,7 +499,11 @@ fn insert_sorted_fileno(vec: &mut Vec<RawFd>, fileno: RawFd) -> PyResult<()> {
 impl_subclass! {
     /// Enable syscalls related to time.
     ///
-    /// A new Time RuleSet allows nothing by default.
+    /// A new Time :class:`~pyextrasafe.RuleSet` allows nothing by default.
+    ///
+    /// See also
+    /// --------
+    /// `Struct extrasafe::builtins::time::Time <https://docs.rs/extrasafe/0.1.2/extrasafe/builtins/time/struct.Time.html>`_
     "Time",
     PyTime,
     DataTime(FlagsTime),
