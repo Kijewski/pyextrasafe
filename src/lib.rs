@@ -37,6 +37,7 @@
 //! allowing the syscalls it can perform via the Linux kernel’s seccomp facilities.
 
 mod additional;
+mod custom;
 mod rule_sets;
 mod safety_ctx;
 
@@ -53,6 +54,10 @@ pyo3::create_exception!(
 
 #[pymodule]
 fn _pyextrasafe(py: Python<'_>, m: &PyModule) -> PyResult<()> {
+    m.add_class::<self::custom::PyCompare>()?;
+    m.add_class::<self::custom::PyCompareOp>()?;
+    m.add_class::<self::custom::PyCustom>()?;
+    m.add_class::<self::custom::PyRule>()?;
     m.add_class::<self::rule_sets::PyBasicCapabilities>()?;
     m.add_class::<self::rule_sets::PyForkAndExec>()?;
     m.add_class::<self::rule_sets::PyNetworking>()?;
@@ -61,11 +66,12 @@ fn _pyextrasafe(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::rule_sets::PyThreads>()?;
     m.add_class::<self::rule_sets::PyTime>()?;
     m.add_class::<self::safety_ctx::PySafetyContext>()?;
+    m.add_function(wrap_pyfunction!(self::additional::lock_pid_file, m)?)?;
+    m.add_function(wrap_pyfunction!(self::additional::restrict_privileges, m)?)?;
     m.add("__author__", env!("CARGO_PKG_AUTHORS"))?;
     m.add("__license__", env!("CARGO_PKG_LICENSE"))?;
     m.add("__version__", env!("pyextrasafe-version"))?;
     m.add("ExtraSafeError", ExtraSafeError::type_object(py))?;
-    m.add_function(wrap_pyfunction!(self::additional::restrict_privileges, m)?)?;
-    m.add_function(wrap_pyfunction!(self::additional::lock_pid_file, m)?)?;
+    m.add("sysno", self::custom::make_syscall_dict(py)?)?;
     Ok(())
 }

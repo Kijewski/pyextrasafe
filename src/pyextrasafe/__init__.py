@@ -85,7 +85,6 @@ Built-in profiles
 -----------------
 
 All built-in profiles inherit from :class:`~pyextrasafe.RuleSet`.
-Adding custom profiles is not implemented, yet.
 
 All methods return :code:`self`\, so method calls can be chained.
 
@@ -107,6 +106,22 @@ All methods return :code:`self`\, so method calls can be chained.
 .. autoclass:: pyextrasafe.Time
     :members:
 
+Custom profiles
+---------------
+
+.. autoclass:: pyextrasafe.Custom
+    :members:
+
+.. autoclass:: pyextrasafe.Rule
+    :members:
+
+.. autoclass:: pyextrasafe.Compare
+    :members:
+
+.. autoclass:: pyextrasafe.CompareOp
+    :members:
+    :undoc-members:
+
 Helper functions
 ----------------
 
@@ -122,30 +137,38 @@ from pyextrasafe._pyextrasafe import (
     __author__,
     __license__,
     __version__,
-    BasicCapabilities,
     ExtraSafeError,
-    ForkAndExec,
-    Networking,
     RuleSet,
     SafetyContext,
+    BasicCapabilities,
+    ForkAndExec,
+    Networking,
     SystemIO,
     Threads,
     Time,
+    Compare,
+    CompareOp,
+    Custom,
+    Rule,
     lock_pid_file,
     restrict_privileges,
 )
 
 
 __all__ = [
-    "BasicCapabilities",
     "ExtraSafeError",
-    "ForkAndExec",
-    "Networking",
     "RuleSet",
     "SafetyContext",
+    "BasicCapabilities",
+    "ForkAndExec",
+    "Networking",
     "SystemIO",
     "Threads",
     "Time",
+    "Compare",
+    "CompareOp",
+    "Custom",
+    "Rule",
     "lock_pid_file",
     "restrict_privileges",
 ]

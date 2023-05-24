@@ -1,7 +1,6 @@
-use std::collections::hash_map::DefaultHasher;
 use std::fmt::{self, Write};
 use std::fs::File;
-use std::hash::{Hash, Hasher};
+use std::hash::Hash;
 use std::mem::ManuallyDrop;
 use std::os::fd::{FromRawFd, RawFd};
 
@@ -10,12 +9,12 @@ use extrasafe::builtins::danger_zone::{ForkAndExec, Threads};
 use extrasafe::builtins::network::Networking;
 use extrasafe::builtins::{BasicCapabilities, SystemIO, Time};
 use extrasafe::SafetyContext;
-use pyo3::pyclass::CompareOp;
 use pyo3::{
-    pyclass, pymethods, AsPyPointer, Py, PyAny, PyClassInitializer, PyRef, PyRefMut, PyResult,
-    Python, ToPyObject,
+    pyclass, pymethods, Py, PyAny, PyClassInitializer, PyRef, PyRefMut, PyResult, Python,
+    ToPyObject,
 };
 
+use crate::custom::DataCustom;
 use crate::ExtraSafeError;
 
 trait EnableExtra<P> {
@@ -71,14 +70,15 @@ pub(crate) trait EnablePolicy {
     fn enable_to(&self, ctx: SafetyContext) -> Result<SafetyContext, extrasafe::ExtraSafeError>;
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-enum DataRuleSet {
+#[derive(Debug, Clone)]
+pub(crate) enum DataRuleSet {
     PyBasicCapabilities(DataBasicCapabilities),
     PyForkAndExec(DataForkAndExec),
     PyThreads(DataThreads),
     PyNetworking(DataNetworking),
     PySystemIO(Box<DataSystemIO>),
     PyTime(DataTime),
+    PyCustom(Box<DataCustom>),
 }
 
 impl EnablePolicy for PyRuleSet {
@@ -97,6 +97,7 @@ impl EnablePolicy for DataRuleSet {
             DataRuleSet::PyNetworking(policy) => policy.enable_to(ctx),
             DataRuleSet::PySystemIO(policy) => policy.enable_to(ctx),
             DataRuleSet::PyTime(policy) => policy.enable_to(ctx),
+            DataRuleSet::PyCustom(policy) => policy.enable_to(ctx),
         }
     }
 }
@@ -109,34 +110,12 @@ impl EnablePolicy for DataRuleSet {
 #[pyclass]
 #[pyo3(name = "RuleSet", module = "pyextrasafe", subclass)]
 #[derive(Debug, Clone)]
-pub(crate) struct PyRuleSet(DataRuleSet);
+pub(crate) struct PyRuleSet(pub(crate) DataRuleSet);
 
 unsafe impl pyo3::PyNativeType for PyRuleSet {}
 
 #[pymethods]
-impl PyRuleSet {
-    fn __richcmp__(left: PyRef<'_, Self>, right: PyRef<'_, Self>, op: CompareOp) -> bool {
-        let order = if left.as_ptr() == right.as_ptr() {
-            std::cmp::Ordering::Equal
-        } else {
-            left.0.cmp(&right.0)
-        };
-        match op {
-            CompareOp::Lt => order.is_lt(),
-            CompareOp::Le => order.is_le(),
-            CompareOp::Eq => order.is_eq(),
-            CompareOp::Ne => order.is_ne(),
-            CompareOp::Gt => order.is_gt(),
-            CompareOp::Ge => order.is_ge(),
-        }
-    }
-
-    fn __hash__(&self) -> u64 {
-        let mut hasher = DefaultHasher::new();
-        self.0.hash(&mut hasher);
-        hasher.finish()
-    }
-}
+impl PyRuleSet {}
 
 macro_rules! impl_subclass {
     (
@@ -154,14 +133,14 @@ macro_rules! impl_subclass {
         $extra:ty
     ) => {
         bitflags! {
-            #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+            #[derive(Debug, Clone, Default)]
             struct $flags_name: u16 {
                 $( const $flag = $value; )*
             }
         }
 
-        #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
-        struct $data_name {
+        #[derive(Debug, Clone, Default)]
+        pub(crate) struct $data_name {
             flags: $flags_name,
             #[allow(dead_code)]
             extra: $extra,
@@ -351,7 +330,7 @@ impl_subclass! {
     ()
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Default)]
 struct ReadWriteFilenos {
     rd: Vec<RawFd>,
     wr: Vec<RawFd>,
