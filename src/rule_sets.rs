@@ -112,8 +112,6 @@ impl EnablePolicy for DataRuleSet {
 #[derive(Debug, Clone)]
 pub(crate) struct PyRuleSet(pub(crate) DataRuleSet);
 
-unsafe impl pyo3::PyNativeType for PyRuleSet {}
-
 #[pymethods]
 impl PyRuleSet {}
 

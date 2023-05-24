@@ -8,9 +8,7 @@ use libseccomp::{ScmpArgCompare, ScmpCompareOp};
 use pyo3::exceptions::{PyTypeError, PyValueError};
 use pyo3::pyclass::CompareOp;
 use pyo3::types::PyDict;
-use pyo3::{
-    pyclass, pymethods, FromPyObject, Py, PyAny, PyCell, PyNativeType, PyRefMut, PyResult, Python,
-};
+use pyo3::{pyclass, pymethods, FromPyObject, Py, PyAny, PyCell, PyRefMut, PyResult, Python};
 use syscalls::Sysno;
 
 use crate::rule_sets::{DataRuleSet, EnablePolicy, PyRuleSet};
@@ -199,8 +197,6 @@ impl PyCompareOp {
         }
     }
 }
-
-unsafe impl PyNativeType for PyCompareOp {}
 
 #[pymethods]
 #[allow(non_snake_case)]
