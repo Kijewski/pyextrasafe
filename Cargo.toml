@@ -28,7 +28,7 @@ pyo3 = { version = "0.18.3", default-features = false, features = ["extension-mo
 rustix = { version = "0.37.19", features = ["fs", "process", "thread"] }
 
 # must be same as extrasafe:
-syscalls = "0.5.0"
+syscalls = "0.6.11"
 libseccomp = "0.2.3"
 
 [build-dependencies]
