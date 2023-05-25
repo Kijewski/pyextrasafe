@@ -119,7 +119,7 @@ impl PySafetyContext {
 
 #[pyclass]
 #[pyo3(name = "_SafetyContextIter")]
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 struct SafetyContextIter {
     ctx: Py<PySafetyContext>,
     idx: usize,

@@ -22,7 +22,7 @@ pub(crate) fn make_syscall_dict(py: Python<'_>) -> PyResult<Py<PyAny>> {
     Ok(dict.as_mapping().into())
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Default)]
 pub(crate) struct DataCustom {
     simple: Vec<Sysno>,
     conditional: HashMap<Sysno, Vec<Rule>>,

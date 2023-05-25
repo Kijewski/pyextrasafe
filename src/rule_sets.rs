@@ -70,7 +70,7 @@ pub(crate) trait EnablePolicy {
     fn enable_to(&self, ctx: SafetyContext) -> Result<SafetyContext, extrasafe::ExtraSafeError>;
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub(crate) enum DataRuleSet {
     PyBasicCapabilities(DataBasicCapabilities),
     PyForkAndExec(DataForkAndExec),
@@ -109,7 +109,7 @@ impl EnablePolicy for DataRuleSet {
 /// `Trait extrasafe::RuleSet <https://docs.rs/extrasafe/0.1.2/extrasafe/trait.RuleSet.html>`_
 #[pyclass]
 #[pyo3(name = "RuleSet", module = "pyextrasafe", subclass)]
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub(crate) struct PyRuleSet(pub(crate) DataRuleSet);
 
 #[pymethods]
@@ -131,13 +131,13 @@ macro_rules! impl_subclass {
         $extra:ty
     ) => {
         bitflags! {
-            #[derive(Debug, Clone, Default)]
+            #[derive(Debug, Default)]
             struct $flags_name: u16 {
                 $( const $flag = $value; )*
             }
         }
 
-        #[derive(Debug, Clone, Default)]
+        #[derive(Debug, Default)]
         pub(crate) struct $data_name {
             flags: $flags_name,
             #[allow(dead_code)]
@@ -328,7 +328,7 @@ impl_subclass! {
     ()
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Default)]
 struct ReadWriteFilenos {
     rd: Vec<RawFd>,
     wr: Vec<RawFd>,
