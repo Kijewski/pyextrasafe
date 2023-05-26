@@ -1,11 +1,9 @@
 use std::io::{Cursor, Write};
 use std::mem::forget;
 use std::path::PathBuf;
-use std::ptr::null;
 
-use cstr::cstr;
-use pyo3::ffi::PyFile_FromFd;
-use pyo3::{pyfunction, Py, PyAny, PyObject, PyResult, Python};
+use pyo3::types::PyDict;
+use pyo3::{pyfunction, Py, PyAny, PyResult, Python};
 use rustix::fd::{AsFd, AsRawFd, BorrowedFd, OwnedFd};
 use rustix::fs::{
     cwd, flock, ftruncate, openat2, FlockOperation, Mode, OFlags, RawMode, ResolveFlags,
@@ -97,7 +95,7 @@ pub(crate) fn lock_pid_file(
     };
 
     match py.allow_threads(|| lock_pid_file_nogil(path, cloexec, mode, contents)) {
-        Ok(fd) => wrap_fd(fd, closefd, py),
+        Ok(fd) => wrap_fd(py, fd, closefd),
         Err((errno, msg)) => raise_errno(py, errno, msg),
     }
 }
@@ -110,7 +108,7 @@ fn raise_errno(py: Python<'_>, errno: Option<Errno>, msg: &str) -> PyResult<Py<P
     let err = ExtraSafeError::new_err(format!("Could not {msg} PID file."));
     let Some(errno) = errno else { return Err(err) };
 
-    let locals = pyo3::types::PyDict::new(py);
+    let locals = PyDict::new(py);
     locals.set_item("err", err)?;
     locals.set_item("errno", errno.raw_os_error())?;
     locals.set_item("strerr", format!("{errno}"))?;
@@ -118,30 +116,19 @@ fn raise_errno(py: Python<'_>, errno: Option<Errno>, msg: &str) -> PyResult<Py<P
     unreachable!()
 }
 
-fn wrap_fd(owned_fd: OwnedFd, closefd: bool, py: Python<'_>) -> PyResult<Py<PyAny>> {
-    let fd = owned_fd.as_raw_fd();
-    let name = null();
-    let mode = cstr!("r+b").as_ptr().cast();
-    let buffering = 0;
-    let encoding = null();
-    let errors = null();
-    let newline = null();
-    let closefd = closefd.into();
+fn wrap_fd(py: Python<'_>, owned_fd: OwnedFd, closefd: bool) -> PyResult<Py<PyAny>> {
+    let locals = PyDict::new(py);
+    locals.set_item("fd", owned_fd.as_raw_fd())?;
+    locals.set_item("closefd", closefd)?;
+    py.run(
+        "ret = open(fd, mode='r+b', buffering=0, closefd=closefd)",
+        None,
+        Some(locals),
+    )?;
+    let Some(file) = locals.get_item("ret") else { unreachable!() };
 
-    let result = unsafe {
-        PyObject::from_owned_ptr_or_err(
-            py,
-            PyFile_FromFd(
-                fd, name, mode, buffering, encoding, errors, newline, closefd,
-            ),
-        )
-    };
-
-    match &result {
-        Ok(_) => forget(owned_fd),
-        Err(_) => drop(owned_fd),
-    }
-    result
+    forget(owned_fd);
+    Ok(file.into())
 }
 
 fn lock_pid_file_nogil(
