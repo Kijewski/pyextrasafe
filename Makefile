@@ -79,7 +79,7 @@ libseccomp/configure:
 
 build-libseccomp/Makefile: libseccomp/configure | build-libseccomp/ dist-libseccomp/
 	cd build-libseccomp/ && \
-		CFLAGS="-Os -flto -g1" ../libseccomp/configure --disable-shared --prefix="$$(readlink -e -- ../dist-libseccomp/)"
+		CFLAGS="-Os -flto -g1" ../libseccomp/configure --disable-shared --prefix="$$(readlink -f -- ../dist-libseccomp/)"
 
 dist-libseccomp/lib/libseccomp.a: build-libseccomp/Makefile
 	${MAKE} -C build-libseccomp/ install
