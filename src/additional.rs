@@ -33,7 +33,7 @@ pub(crate) fn restrict_privileges() {
 
 /// Open and file-lock a PID file to prevent running multiple instances of a program.
 ///
-/// If the PID file was non-existant, then a new file is created.
+/// If the PID file was non-existent, then a new file is created.
 /// If the file already existed, and a lock was held by another process, then the call will raise
 /// an exception.
 ///

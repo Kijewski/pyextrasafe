@@ -2,9 +2,9 @@ __pycache__
 .cache
 .pytest_cache
 
-/build
+/build*
 /cython_debug
-/dist
+/dist*
 /env*
 /logs
 /target

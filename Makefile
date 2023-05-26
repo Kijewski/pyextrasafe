@@ -69,3 +69,17 @@ dists:
 	${MAKE} PYTHON=python3.9 ENV_DIR=env3.9 build || true
 	${MAKE} PYTHON=python3.10 ENV_DIR=env3.10 build || true
 	${MAKE} PYTHON=python3.11 ENV_DIR=env3.11 build || true
+
+
+build-libseccomp/ dist-libseccomp/:
+	mkdir $@
+
+libseccomp/configure:
+	cd libseccomp/ && ./autogen.sh
+
+build-libseccomp/Makefile: libseccomp/configure | build-libseccomp/ dist-libseccomp/
+	cd build-libseccomp/ && \
+		CFLAGS="-Os -flto -g1" ../libseccomp/configure --disable-shared --prefix="$$(readlink -e -- ../dist-libseccomp/)"
+
+dist-libseccomp/lib/libseccomp.a: build-libseccomp/Makefile
+	${MAKE} -C build-libseccomp/ install

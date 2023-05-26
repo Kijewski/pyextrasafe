@@ -43,13 +43,18 @@ jobs:
           CIBW_SKIP: "*musllinux*"
           CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux2014_x86_64
           CIBW_ARCHS: x86_64
-          CIBW_ENVIRONMENT: 'PATH="$PATH:$HOME/.cargo/bin"'
-          CIBW_BEFORE_BUILD_LINUX: |
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --verbose --profile minimal --default-toolchain stable || true
+          CIBW_ENVIRONMENT: |
+            PATH="$PATH:$HOME/.cargo/bin"
+            LIBSECCOMP_LINK_TYPE=static
+            LIBSECCOMP_LIB_PATH={project}/dist-libseccomp/lib
+          CIBW_BEFORE_ALL_LINUX: |
             apt-get -y update || true
             yum -y update || true
-            apt-get -y install libseccomp-dev || true
-            yum -y install libseccomp-devel || true
+            apt-get -y install libseccomp-dev gperf || true
+            yum -y install libseccomp-devel gperf || true
+            make -j4 dist-libseccomp/lib/libseccomp.a
+          CIBW_BEFORE_BUILD_LINUX: |
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --verbose --profile minimal --default-toolchain stable || true
           CIBW_TEST_COMMAND: python3 {project}/hello-world.py
 
       - name: Store artifacts

@@ -290,16 +290,16 @@ impl PyCompareOp {
 
 impl fmt::Display for PyCompareOp {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self.0 {
-            ScmpCompareOp::NotEqual => f.write_str("CompareOp.NotEqual"),
-            ScmpCompareOp::Less => f.write_str("CompareOp.Less"),
-            ScmpCompareOp::LessOrEqual => f.write_str("CompareOp.LessOrEqual"),
-            ScmpCompareOp::Equal => f.write_str("CompareOp.Equal"),
-            ScmpCompareOp::GreaterEqual => f.write_str("CompareOp.GreaterEqual"),
-            ScmpCompareOp::Greater => f.write_str("CompareOp.Greater"),
-            ScmpCompareOp::MaskedEqual(v) => write!(f, "CompareOp.MaskedEqual({v})"),
-            _ => f.write_str("<CompareOp.?>"),
-        }
+        f.write_str(match self.0 {
+            ScmpCompareOp::NotEqual => "CompareOp.NotEqual",
+            ScmpCompareOp::Less => "CompareOp.Less",
+            ScmpCompareOp::LessOrEqual => "CompareOp.LessOrEqual",
+            ScmpCompareOp::Equal => "CompareOp.Equal",
+            ScmpCompareOp::GreaterEqual => "CompareOp.GreaterEqual",
+            ScmpCompareOp::Greater => "CompareOp.Greater",
+            ScmpCompareOp::MaskedEqual(v) => return write!(f, "CompareOp.MaskedEqual({v})"),
+            _ => unreachable!("impossible content"),
+        })
     }
 }
 
