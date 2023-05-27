@@ -1,4 +1,4 @@
-from os import Path
+from os import PathLike
 from typing import BinaryIO, Iterable, Literal, NewType, Optional, Union
 
 Rule = NewType("Rule", list[str])
@@ -20,21 +20,11 @@ class SafetyContext:
         "Load the SafetyContext’s rules into a seccomp filter and apply the filter to all threads in this process."
     def apply_to_current_thread(self) -> None:
         "Load the SafetyContext’s rules into a seccomp filter and apply the filter to the current thread."
-    def enable(self, *policy: list[RuleSet]) -> SafetyContext:
+    def enable(self, *policies: list[RuleSet]) -> SafetyContext:
         "Enable the simple and conditional rules provided by the RuleSet."
 
 class RuleSet:
     "A RuleSet is a collection of seccomp rules that enable a functionality."
-
-    @property
-    def simple_rules(self) -> list[int]:
-        "A simple rule is one that just allows the syscall without restriction."
-    @property
-    def conditional_rules(self) -> list[(Sysno, list[Rule])]:
-        "A conditional rule is a rule that uses a condition to restrict the syscall, e.g. only specific flags as parameters."
-    @property
-    def name(self) -> str:
-        "The name of the profile."
 
 class BasicCapabilities(RuleSet):
     "Allow basic required syscalls to do things like allocate memory, and also a few that are used by Rust to set up panic handling and segfault handlers."
@@ -120,7 +110,7 @@ def restrict_privileges() -> None:
     "Basic security setup to prevent bootstrapping attacks."
 
 def lock_pid_file(
-    path: Union[str, Path],
+    path: Union[str, PathLike],
     *,
     closefd: bool = False,
     cloexec: bool = True,

@@ -4,15 +4,6 @@ use pyo3::{pyclass, pymethods, Py, PyRef, PyRefMut, PyResult, Python};
 use crate::rule_sets::{EnablePolicy, PyRuleSet};
 use crate::ExtraSafeError;
 
-/// A struct representing a set of rules to be loaded into a seccomp filter and applied to the
-/// current thread, or all threads in the current process.
-///
-/// The seccomp filters will not be loaded until either :meth:`.apply_to_current_thread()` or
-/// :meth:`.apply_to_all_threads()` is called.
-///
-/// See also
-/// --------
-/// `Struct extrasafe::SafetyContext <https://docs.rs/extrasafe/0.1.2/extrasafe/struct.SafetyContext.html>`_
 #[pyclass]
 #[pyo3(name = "SafetyContext", module = "pyextrasafe")]
 #[derive(Debug)]
@@ -38,22 +29,6 @@ impl PySafetyContext {
         Self(Vec::new())
     }
 
-    /// Enable the simple and conditional rules provided by the :class:`~pyextrasafe.RuleSet`.
-    ///
-    /// Parameters
-    /// ----------
-    /// policies: list[RuleSet]
-    ///     :class:`~pyextrasafe.RuleSet`\s to enable.
-    ///
-    /// Returns
-    /// -------
-    /// SafetyContext
-    ///     This self object itself, so :meth:`.enable()` can be chained.
-    ///
-    /// Raises
-    /// ------
-    /// TypeError
-    ///     Argument was not an instance of :class:`~pyextrasafe.RuleSet`.
     #[pyo3(signature = (*policies))]
     fn enable(
         mut ctx: PyRefMut<'_, Self>,
@@ -63,12 +38,6 @@ impl PySafetyContext {
         Ok(ctx)
     }
 
-    /// Load the SafetyContext’s rules into a seccomp filter and apply the filter to the current thread.
-    ///
-    /// Raises
-    /// ------
-    /// ExtraSafeError
-    ///     Could not apply policies.
     fn apply_to_current_thread(&mut self, py: Python<'_>) -> PyResult<()> {
         self.to_context(py)?
             .apply_to_current_thread()
@@ -77,12 +46,6 @@ impl PySafetyContext {
             })
     }
 
-    /// Load the SafetyContext’s rules into a seccomp filter and apply the filter to all threads in this process.
-    ///
-    /// Raises
-    /// ------
-    /// ExtraSafeError
-    ///     Could not apply policies.
     fn apply_to_all_threads(&mut self, py: Python<'_>) -> PyResult<()> {
         self.to_context(py)?.apply_to_all_threads().map_err(|err| {
             ExtraSafeError::new_err(format!("could not apply to all threads: {err}"))

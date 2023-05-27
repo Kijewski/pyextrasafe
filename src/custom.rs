@@ -172,7 +172,6 @@ impl From<&PyCompare> for ScmpArgCompare {
     }
 }
 
-/// Represents a comparison operator which can be used in a filter rule.
 #[pyclass(name = "CompareOp", module = "pyextrasafe", frozen)]
 #[derive(Debug)]
 pub(crate) struct PyCompareOp(ScmpCompareOp);
@@ -201,69 +200,41 @@ impl PyCompareOp {
 #[pymethods]
 #[allow(non_snake_case)]
 impl PyCompareOp {
-    /// TODO FIXME: Doc not visible in sphinx
-    /// Not equal
     #[classattr]
     fn NotEqual() -> Self {
         Self(ScmpCompareOp::NotEqual)
     }
 
-    /// TODO FIXME: Doc not visible in sphinx
-    /// Less than
     #[classattr]
     fn Less() -> Self {
         Self(ScmpCompareOp::Less)
     }
 
-    /// TODO FIXME: Doc not visible in sphinx
-    /// Less than or equal
     #[classattr]
     fn LessOrEqual() -> Self {
         Self(ScmpCompareOp::LessOrEqual)
     }
 
-    /// TODO FIXME: Doc not visible in sphinx
-    /// Equal
     #[classattr]
     fn Equal() -> Self {
         Self(ScmpCompareOp::Equal)
     }
 
-    /// TODO FIXME: Doc not visible in sphinx
-    /// Greater than or equal
     #[classattr]
     fn GreaterEqual() -> Self {
         Self(ScmpCompareOp::GreaterEqual)
     }
 
-    /// TODO FIXME: Doc not visible in sphinx
-    /// Greater than
     #[classattr]
     fn Greater() -> Self {
         Self(ScmpCompareOp::Greater)
     }
 
-    /// Masked equality
-    ///
-    /// This works like `Equal` with the exception that the syscall argument is
-    /// masked with `mask` via an bitwise AND (i.e. you can check specific bits in the
-    /// argument).
-    ///
-    /// Arguments
-    /// ---------
-    /// mask: int
-    ///     bit mask
-    ///
-    /// Returns
-    /// -------
-    /// CompareOp
-    ///     The newly crated instance
     #[staticmethod]
     fn MaskedEqual(mask: u64) -> Self {
         Self(ScmpCompareOp::MaskedEqual(mask))
     }
 
-    /// typing.Optional[int]: The parameter in :code:`CompareOp.MaskedEqual(mask)`, or :code:`None` for other values
     #[getter]
     fn mask(&self) -> Option<u64> {
         if let ScmpCompareOp::MaskedEqual(mask) = self.0 {

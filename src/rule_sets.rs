@@ -208,12 +208,6 @@ macro_rules! impl_subclass {
 }
 
 impl_subclass! {
-    /// A :class:`~pyextrasafe.RuleSet` allowing basic required syscalls to do things like allocate memory, and also a
-    /// few that are used by Rust to set up panic handling and segfault handlers.
-    ///
-    /// See also
-    /// --------
-    /// `Trait extrasafe::builtins::basic::BasicCapabilities <https://docs.rs/extrasafe/0.1.2/extrasafe/builtins/basic/struct.BasicCapabilities.html>`_
     "BasicCapabilities",
     PyBasicCapabilities,
     DataBasicCapabilities(FlagsBasicCapabilities),
@@ -222,13 +216,6 @@ impl_subclass! {
 }
 
 impl_subclass! {
-    /// ForkAndExec is in the danger zone because it can be used to start another process, including
-    /// more privileged ones. That process will still be under seccomp’s restrictions but depending
-    /// on your filter it could still do bad things.
-    ///
-    /// See also
-    /// --------
-    /// `Struct extrasafe::builtins::danger_zone::ForkAndExec <https://docs.rs/extrasafe/0.1.2/extrasafe/builtins/danger_zone/struct.ForkAndExec.html>`_
     "ForkAndExec",
     PyForkAndExec,
     DataForkAndExec(FlagsForkAndExec),
@@ -237,38 +224,17 @@ impl_subclass! {
 }
 
 impl_subclass! {
-    /// Allows clone and sleep syscalls, which allow creating new threads and processes, and pausing them.
-    ///
-    /// A new :class:`~pyextrasafe.Threads` ruleset allows nothing by default.
-    ///
-    /// See also
-    /// --------
-    /// `Struct extrasafe::builtins::danger_zone::Threads <https://docs.rs/extrasafe/0.1.2/extrasafe/builtins/danger_zone/struct.Threads.html>`_
     "Threads",
     PyThreads,
     DataThreads(FlagsThreads),
     policy: Threads = Threads::nothing() => {
-        /// Allow creating new threads and processes.
         [1 << 0] ALLOW_CREATE => allow_create [policy.allow_create()];
-
-        /// Allow sleeping on the current thread
-        ///
-        /// Warning
-        /// -------
-        /// An attacker with arbitrary code execution and access to a high resolution timer can mount timing attacks (e.g. spectre).
         [1 << 1] ALLOW_SLEEP => allow_sleep [policy.allow_sleep().yes_really()];
     }
     ()
 }
 
 impl_subclass! {
-    /// A :class:`~pyextrasafe.RuleSet` representing syscalls that perform network operations - accept/listen/bind/connect etc.
-    ///
-    /// By default, allow no networking syscalls.
-    ///
-    /// See also
-    /// --------
-    /// `Struct extrasafe::builtins::network::Networking <https://docs.rs/extrasafe/0.1.2/extrasafe/builtins/network/struct.Networking.html>`_
     "Networking",
     PyNetworking,
     DataNetworking(FlagsNetworking),
@@ -474,20 +440,10 @@ fn insert_sorted_fileno(vec: &mut Vec<RawFd>, fileno: RawFd) -> PyResult<()> {
 }
 
 impl_subclass! {
-    /// Enable syscalls related to time.
-    ///
-    /// A new Time :class:`~pyextrasafe.RuleSet` allows nothing by default.
-    ///
-    /// See also
-    /// --------
-    /// `Struct extrasafe::builtins::time::Time <https://docs.rs/extrasafe/0.1.2/extrasafe/builtins/time/struct.Time.html>`_
     "Time",
     PyTime,
     DataTime(FlagsTime),
     policy: Time = Time::nothing() => {
-        /// On most 64 bit systems glibc and musl both use the vDSO to compute the time directly
-        /// with rdtsc rather than calling the clock_gettime syscall, so in most cases you don’t
-        /// need to actually enable this.
         [1 << 0] ALLOW_GETTIME => allow_gettime
         [policy.allow_gettime()];
     }

@@ -14,12 +14,6 @@ use rustix::{io, thread};
 
 use crate::ExtraSafeError;
 
-/// Basic security setup to prevent bootstrapping attacks.
-///
-/// * This function `unshare <https://manpages.debian.org/bullseye/manpages-dev/unshare.2.en.html>`_\s
-///   file descriptors, filesystem, and semaphore adjustments with its parent process (if present).
-/// * It clears its `ambient capability set <https://manpages.debian.org/buster/manpages/capabilities.7.en.html>`_\.
-/// * And sets the `no new privileges bit <https://manpages.debian.org/bullseye/manpages-dev/prctl.2.en.html>`_\.
 #[pyfunction]
 pub(crate) fn restrict_privileges() {
     let _: Result<(), io::Errno> = thread::unshare(
@@ -29,43 +23,6 @@ pub(crate) fn restrict_privileges() {
     let _: Result<(), io::Errno> = thread::set_no_new_privs(true);
 }
 
-/// Open and file-lock a PID file to prevent running multiple instances of a program.
-///
-/// If the PID file was non-existent, then a new file is created.
-/// If the file already existed, and a lock was held by another process, then the call will raise
-/// an exception.
-///
-/// Arguments
-/// ---------
-/// path: os.PathLike
-///     The path of the PID file.
-/// closefd: bool
-///     By default (unless the function is called with :code:`closefd=True`) the file descriptor of
-///     the opened PID file will leak if the returned :class:`File` is collected, so the lock will
-///     be held until the process terminates.
-/// cloexec: bool
-///     By default the file descriptor will not be passed to sub processes.
-///     To pass the file descriptor to subprocesses use :code:`cloexec=False`.
-///
-///     If you want to keep the file-lock as long as a subprocess is around, then you should
-///     probably still not use this flag, but :func:`os.dup()` the file descriptor in
-///     :class:`~subprocess.Popen`\'s :code:`preexec_fn` parameter.
-/// mode: int
-///     The file mode of the PID file. Only used if the file is newly created.
-///     If you supply a mode that is not readable and writable to the user, then all subsequent
-///     calls to this function will fail, whether the lock is still help or not.
-///     So make sure to always include :code:`0o600` in the mode!
-///
-///     By default (:code:`0o640`) the file will be readable and writable for its user;
-///     readable for the user's group; and inaccessible for other users.
-/// contents: bytes
-///     By default the file will contain the `PID <https://manpages.debian.org/bullseye/manpages-dev/getpid.2.en.html>`_
-///     of the current process followed by a newline.
-///
-/// Returns
-/// -------
-/// typing.BinaryIO
-///     The opened file descriptor that holds the file lock.
 #[pyfunction]
 #[pyo3(
     signature = (path, *, closefd=false, cloexec=true, mode=0o640, contents=None),
