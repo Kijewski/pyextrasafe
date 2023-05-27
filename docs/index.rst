@@ -104,6 +104,9 @@ Classes
 
     A RuleSet is a collection of seccomp rules that enable a functionality.
 
+    .. .. seealso::
+       Trait `extrasafe::RuleSet <https://docs.rs/extrasafe/0.1.2/extrasafe/trait.RuleSet.html>`_
+
 .. py:exception:: ExtraSafeError
 
     An exception thrown by PyExtraSafe.
@@ -220,8 +223,90 @@ All methods return :code:`self`\, so calls can be chained.
             You probably don’t need to use this. In most cases you can just run your server
             and then use :meth:`allow_running_unix_servers`\.
 
-.. autoclass:: SystemIO
-    :members:
+.. class:: SystemIO
+    :final:
+
+    A :class:`~pyextrasafe.RuleSet` representing syscalls that perform IO - open/close/read/write/seek/stat.
+
+    By default, allow no IO syscalls.
+
+    .. seealso::
+
+        Struct `extrasafe::builtins::systemio::SystemIO
+        <https://docs.rs/extrasafe/0.1.2/extrasafe/builtins/systemio/struct.SystemIO.html>`_
+
+    .. py:method:: everything() -> SystemIO
+        :staticmethod:
+
+        Allow all IO syscalls.
+
+    .. py:method:: allow_close() -> SystemIO
+
+        Allow close syscalls.
+
+    .. py:method:: allow_ioctl() -> SystemIO
+
+        Allow ioctl and fcntl syscalls.
+
+    .. py:method:: allow_metadata() -> SystemIO
+
+        Allow stat syscalls.
+
+    .. py:method:: allow_open() -> SystemIO
+
+        Allow open syscalls.
+
+        .. .. warning::
+
+            It’s easy to accidentally combine this ruleset with another ruleset that allows write -
+            for example the Network ruleset - even if you only want to read files.
+
+    .. py:method:: allow_open_readonly() -> SystemIO
+
+        Allow open syscalls but not with write flags.
+
+        .. note::
+
+            Without this ruleset your program most likely won't work, because Python won't be
+            able to read any modules that are not loaded, yet.
+
+    .. py:method:: allow_read() -> SystemIO
+
+        Allow read syscalls.
+
+    .. py:method:: allow_stderr() -> SystemIO
+
+        Allow writing to stderr.
+
+    .. py:method:: allow_stdin() -> SystemIO
+
+        Allow reading from stdin.
+
+    .. py:method:: allow_stdout() -> SystemIO
+
+        Allow writing to stdout.
+
+    .. py:method:: allow_write() -> SystemIO
+
+        Allow write syscalls.
+
+    .. py:method:: allow_file_read(fileno: int) -> SystemIO
+
+        Allow reading a given open file descriptor.
+
+        .. warning::
+
+            If another file or socket is opened after the file provided to this function is closed,
+            it’s possible that the fd will be reused and therefore may be read from.
+
+    .. py:method:: allow_file_write(fileno: int) -> SystemIO
+
+        Allow writing to a given open file descriptor.
+
+        .. warning::
+
+            If another file or socket is opened after the file provided to this function is closed,
+            it’s possible that the fd will be reused and therefore may be read from.
 
 .. class:: Threads
     :final:
@@ -234,7 +319,6 @@ All methods return :code:`self`\, so calls can be chained.
 
         Struct `extrasafe::builtins::danger_zone::Threads
         <https://docs.rs/extrasafe/0.1.2/extrasafe/builtins/danger_zone/struct.Threads.html>`_
-
 
     .. py:method:: allow_create() -> Threads
 

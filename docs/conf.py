@@ -17,7 +17,6 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.inheritance_diagram",
     "sphinx.ext.graphviz",
-    "sphinx_autodoc_typehints",
     "sphinx_immaterial",
 ]
 

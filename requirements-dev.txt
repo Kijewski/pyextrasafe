@@ -10,6 +10,5 @@ setuptools-rust
 wheel
 
 # keep synchronous to requirements-readthedocs.txt
-furo == 2023.5.20
 sphinx == 7.*
-sphinx_autodoc_typehints == 1.*
+sphinx_immaterial == 0.11.*
