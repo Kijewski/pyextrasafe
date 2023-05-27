@@ -52,9 +52,9 @@ jobs:
             yum -y update || true
             apk update || true
 
-            apt-get -y install libseccomp-dev gperf || true
-            yum -y install libseccomp-devel gperf || true
-            apk add gperf  || true
+            apt-get -y install gperf graphviz || true
+            yum -y install gperf graphviz || true
+            apk add gperf graphviz  || true
 
             make -j4 dist-libseccomp/lib/libseccomp.a
           CIBW_TEST_COMMAND: python3 {project}/hello-world.py

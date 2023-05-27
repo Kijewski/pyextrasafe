@@ -130,7 +130,7 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
 
       - name: Apt-get install
-        run: sudo apt-get install -y libseccomp-dev
+        run: sudo apt-get install -y libseccomp-dev graphviz
 
       - name: Install dependencies
         run: |
