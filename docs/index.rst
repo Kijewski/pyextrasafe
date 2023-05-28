@@ -425,7 +425,7 @@ but they might come in handy anyways.
         The path of the PID file.
     :param closefd:
         By default (unless the function is called with :code:`closefd=True`) the file descriptor of
-        the opened PID file will leak if the returned :class:`File` is collected, so the lock will
+        the opened PID file will leak if the returned :code:`File` is collected, so the lock will
         be held until the process terminates.
     :param cloexec:
         By default the file descriptor will not be passed to sub processes.

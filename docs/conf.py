@@ -35,6 +35,7 @@ pygments_style = "sphinx"
 todo_include_todos = False
 autoclass_content = "both"
 add_module_names = False
+nitpicky = True
 
 graphviz_output_format = "svg"
 inheritance_graph_attrs = {
@@ -146,3 +147,5 @@ html_theme_options = {
     ],
 }
 sphinx_immaterial_bundle_source_maps = True
+
+templates_path = ["_templates"]

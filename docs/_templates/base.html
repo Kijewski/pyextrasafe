@@ -1,0 +1,21 @@
+{% extends "!base.html" %}
+{% block site_nav %}
+  <div
+    class="md-sidebar md-sidebar--primary"
+    data-md-component="sidebar"
+    data-md-type="navigation"
+  >
+    <div class="md-sidebar__scrollwrap">
+      <div class="md-sidebar__inner">
+        {% include "partials/toc.html" %}
+      </div>
+      <br />
+      <div
+        class="flat"
+        data-ea-publisher="readthedocs"
+        data-ea-type="readthedocs-sidebar"
+        data-ea-manual="true"
+      ></div>
+    </div>
+  </div>
+{% endblock %}
