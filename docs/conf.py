@@ -124,7 +124,7 @@ html_theme_options = {
         },
     ],
     "font": {
-        "text": "Source Sans Pro",
+        "text": "Source Sans 3",
         "code": "Source Code Pro",
     },
     "version_dropdown": True,
