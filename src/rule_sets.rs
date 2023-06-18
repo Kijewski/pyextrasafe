@@ -258,8 +258,8 @@ impl_subclass! {
         [1 << 7] ALLOW_START_UDP_SERVERS => allow_start_udp_servers
         [policy.allow_start_udp_servers().yes_really()];
 
-        [1 << 8] ALLOW_START_UNIX_SERVER => allow_start_unix_server
-        [policy.allow_start_unix_server().yes_really()];
+        [1 << 8] ALLOW_START_UNIX_SERVERS => allow_start_unix_servers
+        [policy.allow_start_unix_servers().yes_really()];
     }
     ()
 }

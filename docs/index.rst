@@ -214,7 +214,7 @@ All methods return :code:`self`\, so calls can be chained.
             You probably don’t need to use this. In most cases you can just run your server
             and then use :meth:`allow_running_udp_sockets`\.
 
-    .. py:method:: allow_start_unix_server() -> Networking
+    .. py:method:: allow_start_unix_servers() -> Networking
 
         Allow starting new Unix domain servers
 
