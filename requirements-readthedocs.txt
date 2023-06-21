@@ -1,5 +1,5 @@
 # keep synchronous to Cargo.toml
-pyextrasafe == 0.0.0a1
+pyextrasafe == 0.1.0a1
 
 # keep synchronous to requirements-dev.txt
 sphinx == 7.*

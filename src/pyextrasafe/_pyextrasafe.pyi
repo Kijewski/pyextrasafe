@@ -119,65 +119,65 @@ def lock_pid_file(
 ) -> BinaryIO:
     "Open and file-lock a PID file to prevent running multiple instances of a program."
 
-class CompareOp:
-    "Represents a comparison operator which can be used in a filter rule."
-    NotEqual: CompareOp
-    "Not equal"
-    Less: CompareOp
-    "Less than"
-    LessOrEqual: CompareOp
-    "Less than or equal"
-    Equal: CompareOp
-    "Equal"
-    GreaterEqual: CompareOp
-    "Greater than or equal"
-    Greater: CompareOp
-    "Greater than"
-    @staticmethod
-    def MaskedEqual(mask: int) -> CompareOp:
-        "Masked equality"
-    @property
-    def mask(self) -> Optional[int]:
-        "The parameter in CompareOp.MaskedEqual(mask)"
-
-CompareOpLike = Union[
-    CompareOp,
-    int,
-    Literal[
-        "!=",
-        "<",
-        "<=",
-        "==",
-        ">=",
-        ">",
-    ],
-]
-
-class Compare:
-    "Represents a rule in a libseccomp filter context."
-    def __init__(self, arg: int, op: CompareOpLike, datum: int) -> None:
-        "Build a new comparator"
-
-CompareLike = Union[
-    CompareOp,
-    (int, CompareOpLike, int),
-]
-
-class Rule:
-    "Represents a rule in a libseccomp filter context."
-    def __init__(self, syscall: int, comparators: Iterable[CompareLike]) -> None:
-        "Build a new rule"
-
-RuleLike = Union[
-    Rule,
-    (int, Iterable[CompareLike]),
-]
-
-class Custom:
-    "A custom RuleSet"
-    def __init__(self) -> None:
-        "A new Custom rule set does not allow anything"
-    def add_simple(self, sysno: int) -> Custom:
-        "TODO: Doc"
-    def add_conditional(self, rule: RuleLike) -> Custom:
-        "TODO: Doc"
+# class CompareOp:
+#     "Represents a comparison operator which can be used in a filter rule."
+#     NotEqual: CompareOp
+#     "Not equal"
+#     Less: CompareOp
+#     "Less than"
+#     LessOrEqual: CompareOp
+#     "Less than or equal"
+#     Equal: CompareOp
+#     "Equal"
+#     GreaterEqual: CompareOp
+#     "Greater than or equal"
+#     Greater: CompareOp
+#     "Greater than"
+#     @staticmethod
+#     def MaskedEqual(mask: int) -> CompareOp:
+#         "Masked equality"
+#     @property
+#     def mask(self) -> Optional[int]:
+#         "The parameter in CompareOp.MaskedEqual(mask)"
+#
+# CompareOpLike = Union[
+#     CompareOp,
+#     int,
+#     Literal[
+#         "!=",
+#         "<",
+#         "<=",
+#         "==",
+#         ">=",
+#         ">",
+#     ],
+# ]
+#
+# class Compare:
+#     "Represents a rule in a libseccomp filter context."
+#     def __init__(self, arg: int, op: CompareOpLike, datum: int) -> None:
+#         "Build a new comparator"
+#
+# CompareLike = Union[
+#     CompareOp,
+#     (int, CompareOpLike, int),
+# ]
+#
+# class Rule:
+#     "Represents a rule in a libseccomp filter context."
+#     def __init__(self, syscall: int, comparators: Iterable[CompareLike]) -> None:
+#         "Build a new rule"
+#
+# RuleLike = Union[
+#     Rule,
+#     (int, Iterable[CompareLike]),
+# ]
+#
+# class Custom:
+#     "A custom RuleSet"
+#     def __init__(self) -> None:
+#         "A new Custom rule set does not allow anything"
+#     def add_simple(self, sysno: int) -> Custom:
+#         "TODO: Doc"
+#     def add_conditional(self, rule: RuleLike) -> Custom:
+#         "TODO: Doc"

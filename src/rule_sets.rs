@@ -14,7 +14,7 @@ use pyo3::{
     ToPyObject,
 };
 
-use crate::custom::DataCustom;
+// use crate::custom::DataCustom;
 use crate::ExtraSafeError;
 
 trait EnableExtra<P> {
@@ -78,7 +78,7 @@ pub(crate) enum DataRuleSet {
     PyNetworking(DataNetworking),
     PySystemIO(Box<DataSystemIO>),
     PyTime(DataTime),
-    PyCustom(Box<DataCustom>),
+    // PyCustom(Box<DataCustom>),
 }
 
 impl EnablePolicy for PyRuleSet {
@@ -97,7 +97,7 @@ impl EnablePolicy for DataRuleSet {
             DataRuleSet::PyNetworking(policy) => policy.enable_to(ctx),
             DataRuleSet::PySystemIO(policy) => policy.enable_to(ctx),
             DataRuleSet::PyTime(policy) => policy.enable_to(ctx),
-            DataRuleSet::PyCustom(policy) => policy.enable_to(ctx),
+            // DataRuleSet::PyCustom(policy) => policy.enable_to(ctx),
         }
     }
 }
@@ -157,7 +157,7 @@ macro_rules! impl_subclass {
                 )*
                 $policy = extra.enable_extra($policy);
 
-                ctx.enable($policy)
+                ctx.enable(&$policy)
             }
         }
 

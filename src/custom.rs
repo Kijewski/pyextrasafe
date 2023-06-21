@@ -48,9 +48,6 @@ impl RuleSet for &DataCustom {
     }
 }
 
-/// A custom :class:`~pyextrasafe.RuleSet`.
-///
-/// TODO: DOc
 #[pyclass(name = "Custom", module = "pyextrasafe", extends = PyRuleSet)]
 pub(crate) struct PyCustom;
 
@@ -64,7 +61,6 @@ impl PyCustom {
         )
     }
 
-    /// TODO: Doc
     fn add_simple(mut this: PyRefMut<'_, Self>, sysno: usize) -> PyResult<PyRefMut<'_, Self>> {
         let sysno =
             Sysno::new(sysno).ok_or_else(|| ExtraSafeError::new_err("unknown syscall number"))?;
@@ -79,7 +75,6 @@ impl PyCustom {
         Ok(this)
     }
 
-    /// TODO: Doc
     fn add_conditional(mut this: PyRefMut<'_, Self>, rule: PyRule) -> PyResult<PyRefMut<'_, Self>> {
         let PyRule(syscall, comparators) = rule;
         let syscall =
@@ -104,7 +99,6 @@ impl PyCustom {
     }
 }
 
-/// Represents a rule in a libseccomp filter context.
 #[pyclass(name = "Rule", module = "pyextrasafe", frozen)]
 #[derive(Debug, FromPyObject)]
 pub(crate) struct PyRule(usize, Vec<PyCompare>);
@@ -143,7 +137,6 @@ impl<T: fmt::Display> fmt::Display for Slice<'_, T> {
     }
 }
 
-/// Represents a rule in a libseccomp filter context.
 #[pyclass(name = "Compare", module = "pyextrasafe", frozen)]
 #[derive(Debug, FromPyObject)]
 pub(crate) struct PyCompare(u32, PyCompareOp, u64);

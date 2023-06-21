@@ -124,8 +124,11 @@ All methods return :code:`self`\, so calls can be chained.
     pyextrasafe.SystemIO
     pyextrasafe.Threads
     pyextrasafe.Time
-    pyextrasafe.Custom
     :parts: 1
+
+..
+
+    pyextrasafe.Custom
 
 .. py:class:: BasicCapabilities
     :final:
@@ -351,62 +354,62 @@ All methods return :code:`self`\, so calls can be chained.
         with rdtsc rather than calling the clock_gettime syscall, so in most cases you don’t
         need to actually enable this.
 
-Custom profiles
----------------
+..
+    Custom profiles
 
-.. autoclass:: Custom
-    :members:
+    .. autoclass:: Custom
+        :members:
 
-.. autoclass:: Rule
-    :members:
+    .. autoclass:: Rule
+        :members:
 
-.. autoclass:: Compare
-    :members:
+    .. autoclass:: Compare
+        :members:
 
-.. class:: CompareOp
-    :final:
+    .. class:: CompareOp
+        :final:
 
-    Represents a comparison operator which can be used in a filter rule.
+        Represents a comparison operator which can be used in a filter rule.
 
-    .. py:property:: Less
-        :classmethod:
-        :type: CompareOp
+        .. py:property:: Less
+            :classmethod:
+            :type: CompareOp
 
-    .. py:property:: LessOrEqual
-        :classmethod:
-        :type: CompareOp
+        .. py:property:: LessOrEqual
+            :classmethod:
+            :type: CompareOp
 
-    .. py:property:: Equal
-        :classmethod:
-        :type: CompareOp
+        .. py:property:: Equal
+            :classmethod:
+            :type: CompareOp
 
-    .. py:property:: NotEqual
-        :classmethod:
-        :type: CompareOp
+        .. py:property:: NotEqual
+            :classmethod:
+            :type: CompareOp
 
-    .. py:property:: GreaterEqual
-        :classmethod:
-        :type: CompareOp
+        .. py:property:: GreaterEqual
+            :classmethod:
+            :type: CompareOp
 
-    .. py:property:: Greater
-        :classmethod:
-        :type: CompareOp
+        .. py:property:: Greater
+            :classmethod:
+            :type: CompareOp
 
-    .. py:method:: MaskedEqual(mask: int) -> CompareOp
-        :staticmethod:
+        .. py:method:: MaskedEqual(mask: int) -> CompareOp
+            :staticmethod:
 
-        This works like :data:`Equal` with the exception that the syscall argument is
-        masked with :code:`mask` via an bitwise :code:`AND` (i.e. you can check specific bits in
-        the argument).
+            This works like :data:`Equal` with the exception that the syscall argument is
+            masked with :code:`mask` via an bitwise :code:`AND` (i.e. you can check specific bits in
+            the argument).
 
-        :param mask: bit mask
+            :param mask: bit mask
 
-        :return: The newly crated instance
+            :return: The newly crated instance
 
-    .. py:property:: mask
-        :type: typing.Optional[int]
+        .. py:property:: mask
+            :type: typing.Optional[int]
 
-        The parameter in :code:`CompareOp.MaskedEqual(mask)`, or :data:`None` for other values
+            The parameter in :code:`CompareOp.MaskedEqual(mask)`, or :data:`None` for other values
 
 Helper functions
 ----------------
